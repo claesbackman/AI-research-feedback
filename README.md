@@ -66,4 +66,4 @@ or into a project-level skills directory (`.claude/commands/review-paper.md` rel
 
 ## License
 
-MIT
+MIT — free to use, adapt, and share. 
