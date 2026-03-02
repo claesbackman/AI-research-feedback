@@ -49,6 +49,8 @@ The skill is designed to be extended in two ways.
 
 *Adding project-specific context:* You can ask Claude to inject context about your specific paper before running the skill. For example: "Before running /review-paper, note that this paper uses a regression discontinuity design and the main identification concern is sorting around the threshold." Claude will carry that context into the review. A more durable approach is to put project-specific instructions in a `CLAUDE.md` file in your project directory — Claude Code reads this automatically and the agents will have access to it when reviewing your paper.
 
+*Changing folder structure:* In the baseline specification of this tool, Claude will search through folders looking for tables and figures. You can simply put in your own file paths to make it slightly easier. If you prefer to get the feedback saved somewhere else, you can also change the path for where the final report is saved. 
+
 **Requirements:**
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent (i.e., the Agent tool must be available).
