@@ -455,21 +455,21 @@ that must be resolved before submission.]
 
 ---
 
-## 1. Spelling, Grammar & Style
+## 1. Contribution & Referee Assessment
 
-[Agent 1 output, preserving its structure]
-
----
-
-## 2. Internal Consistency & Cross-Reference Verification
-
-[Agent 2 output]
+[Agent 6 output]
 
 ---
 
-## 3. Unsupported Claims & Identification Integrity
+## 2. Unsupported Claims & Identification Integrity
 
 [Agent 3 output]
+
+---
+
+## 3. Internal Consistency & Cross-Reference Verification
+
+[Agent 2 output]
 
 ---
 
@@ -485,9 +485,9 @@ that must be resolved before submission.]
 
 ---
 
-## 6. Contribution & Referee Assessment
+## 6. Spelling, Grammar & Style
 
-[Agent 6 output]
+[Agent 1 output, preserving its structure]
 
 ---
 
