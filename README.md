@@ -18,6 +18,23 @@ Runs a rigorous pre-submission review of an academic paper, simulating the scrut
 | 5 | Tables, figures, and their documentation |
 | 6 | Contribution evaluation (adversarial journal-specific referee) |
 
+
+**Installation:**
+
+Run this command in your terminal, then restart Claude Code:
+
+```bash
+curl -o ~/.claude/commands/review-paper.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper.md
+```
+
+This installs the skill globally. For a project-local install instead, use `.claude/commands/review-paper.md` relative to the project root:
+
+```bash
+mkdir -p .claude/commands && curl -o .claude/commands/review-paper.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper.md
+```
+
 **Usage:**
 
 From within the paper's directory, run:
@@ -55,15 +72,6 @@ The skill is designed to be extended in two ways.
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent (i.e., the Agent tool must be available).
 - The paper must be in LaTeX format. The skill reads `.tex` files and optionally inspects figure and table files.
 
-**Installation:**
-
-Copy [Paper-review/review-paper.md](Paper-review/review-paper.md) into your Claude Code skills directory:
-
-```
-~/.claude/commands/review-paper.md
-```
-
-or into a project-level skills directory (`.claude/commands/review-paper.md` relative to the project root) if you prefer per-project installation.
 
 ## License
 
