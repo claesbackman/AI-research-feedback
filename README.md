@@ -5,10 +5,10 @@ A collection of [Claude Code](https://claude.ai/code) skills for academic resear
 
 ## Skills in this folder
 
-- `Paper-review/review-paper.md`: Full referee-style paper review command.
-- `Paper-review/review-paper-light.md`: Fast 2-agent paper check.
-- `Paper-review/review-pap.md`: Pre-analysis plan review command.
-- `Paper-review/review-grant.md`: Grant proposal review command.
+- `Skills/review-paper.md`: Full referee-style paper review command.
+- `Skills/review-paper-light.md`: Fast 2-agent paper check.
+- `Skills/review-pap.md`: Pre-analysis plan review command.
+- `Skills/review-grant.md`: Grant proposal review command.
 
 
 ## Skills
