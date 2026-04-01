@@ -44,9 +44,13 @@ Record:
 - List of table file paths
 - The paper title, authors, and abstract (from the main .tex file)
 
+**If zero figure files are found**, warn the user: "No figure files were found in standard locations. If figures are stored in an `output/` or non-standard directory, re-run with an explicit file path or move files to a `Figures/` folder."
+
+**If zero table files are found**, warn the user: "No table .tex files were found in standard locations. Tables may be stored in an `output/` or non-standard directory. Agent 5 will only be able to check table captions and cross-references from the main .tex files."
+
 ## Phase 2: Launch 6 Review Agents in Parallel
 
-In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the paper files independently. Pass the complete list of .tex file paths, figure paths, and table paths to each agent in its prompt. When constructing Agent 6's prompt, substitute the actual resolved value of `TARGET_JOURNAL` for every occurrence of `TARGET_JOURNAL` in that agent's prompt text.
+In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the paper files independently. Pass the complete list of .tex file paths, figure paths, and table paths to each agent in its prompt. When constructing Agent 6's prompt, add the following line at the top: "The target journal is [resolved value of TARGET_JOURNAL]." Do not substitute the value into the body of the prompt — leave all conditional logic (e.g., "If TARGET_JOURNAL is top-field...") intact so Agent 6 can reason with it.
 
 ---
 
@@ -78,17 +82,20 @@ You are a copy editor at a top economics journal. Read all .tex files in the fol
 6. **Number formatting**: Are numbers below 10 spelled out in prose? Are percentages consistent (15% vs 15 percent)?
 
 **Output format:**
+
+Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of its line. Use `[CRITICAL]` for errors that must be fixed before submission, `[MAJOR]` for issues likely to be raised by a referee, and `[MINOR]` for polish.
+
 ```
 ## Agent 1: Spelling, Grammar & Style
 
 ### Critical Issues (must fix before submission)
-[numbered list: Location | "Problematic text" → "Suggested correction" | Reason]
+[numbered list: [CRITICAL] Location | "Problematic text" → "Suggested correction" | Reason]
 
 ### Minor Issues
-[numbered list: same format]
+[numbered list: [MINOR] same format]
 
 ### Style Patterns to Fix Throughout
-[list recurring style problems with one example each and a global fix instruction]
+[list recurring style problems with one example each and a global fix instruction — tag each [MAJOR] or [MINOR]]
 ```
 
 The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
@@ -101,39 +108,37 @@ You are a technical reviewer checking whether an economics paper is internally c
 
 **What to check:**
 
-1. **Numerical consistency**: Every time a specific number appears in the text (coefficients, percentages, sample sizes, years), verify it matches the number in the referenced table or figure. Flag discrepancies such as "text says 1.3% but Table 2 Column 3 shows 1.2%."
+1. **Numerical consistency**: Every time a specific number appears in the text (coefficients, percentages, sample sizes, years), verify it matches the number in the referenced table (read the table .tex file directly). Flag discrepancies such as "text says 1.3% but Table 2 Column 3 shows 1.2%." Note: numbers embedded in figures (e.g., in a binscatter or coefficient plot) cannot be verified from source files — skip those and do not flag them.
 
 2. **Abstract vs. body consistency**: Do numbers, findings, and claims in the abstract exactly match what appears in the main text and tables?
 
 3. **Introduction vs. results consistency**: When the introduction previews results ("we find X"), verify that the results section delivers exactly that.
 
-4. **Cross-reference correctness**: For every "as shown in Figure X", "Table Y shows", "see Appendix A" — verify the referenced element exists and actually shows what is claimed.
+4. **Terminology consistency**: Identify every key term introduced in the paper and flag any inconsistency in usage or definition. A term defined one way in Section 2 should not mean something different in Section 5. Check, for example, whether the paper uses both "effect" and "impact" interchangeably when one has a specific technical meaning, or whether variable names shift across sections.
 
-5. **Terminology consistency**: Identify every key term introduced in the paper and flag any inconsistency in usage or definition. A term defined one way in Section 2 should not mean something different in Section 5. Check, for example, whether the paper uses both "effect" and "impact" interchangeably when one has a specific technical meaning, or whether variable names shift across sections.
+5. **Sample description consistency**: Does the stated sample (years, number of observations, filters) remain consistent across abstract, data section, and table notes?
 
-6. **Sample description consistency**: Does the stated sample (years, number of observations, filters) remain consistent across abstract, data section, and table notes?
+6. **Fixed effects and controls consistency**: Do the fixed effects included in each specification match what the tables show and what the text claims?
 
-7. **Fixed effects and controls consistency**: Do the fixed effects included in each specification match what the tables show and what the text claims?
+7. **Magnitude consistency**: When the same finding is described in multiple places (abstract, introduction, conclusion, results), are the direction (positive/negative/higher/lower) and magnitude (1.3%, 14 cumulative percentage points, etc.) stated consistently?
 
-8. **Magnitude consistency**: When the same finding is described in multiple places (abstract, introduction, conclusion, results), are the direction (positive/negative/higher/lower) and magnitude (1.3%, 14 cumulative percentage points, etc.) stated consistently?
-
-9. **Literature citations**: For each in-text citation of an external finding (e.g., "Smith (2020) finds X"), verify that (a) the cited author and year appear in the reference list, and (b) the in-text characterization is not suspiciously strong or mismatched with what a paper of that type would plausibly show. Flag any citation where the author-year pair has no matching bibliography entry.
+8. **Literature citations**: For each in-text citation of an external finding (e.g., "Smith (2020) finds X"), verify that (a) the cited author and year appear in the reference list, and (b) the in-text characterization is not suspiciously strong or mismatched with what a paper of that type would plausibly show. Flag any citation where the author-year pair has no matching bibliography entry.
 
 **Output format:**
+
+Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of its line.
+
 ```
 ## Agent 2: Internal Consistency & Cross-Reference Verification
 
 ### Critical Inconsistencies
-[numbered list: [Location 1] ↔ [Location 2] | What conflicts | Severity: CRITICAL]
-
-### Cross-Reference Errors
-[numbered list: Reference in text | Target element | Issue]
+[numbered list: [CRITICAL] [Location 1] ↔ [Location 2] | What conflicts]
 
 ### Terminology Drift
-[numbered list: Term | How it varies | Recommended standardization]
+[numbered list: [MAJOR] or [MINOR] Term | How it varies | Recommended standardization]
 
 ### Minor Inconsistencies
-[numbered list: same format as Critical]
+[numbered list: [MINOR] same format as Critical]
 ```
 
 The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
@@ -148,39 +153,40 @@ You are a skeptical econometrician who enforces "claim discipline" — the princ
 
 **What to check:**
 
-1. **Causal language without causal identification**: Flag every instance of "causes", "leads to", "drives", "determines", "because of", "due to", "results in" applied to the main findings — unless the paper provides genuine causal identification for that specific claim. Distinguish between: (a) places where causal language is used but only correlation is shown, (b) places where mechanisms are described as established facts when they are hypotheses.
+1. **Causal language without causal identification**: Flag every specific sentence where causal language ("causes", "leads to", "drives", "determines", "because of", "due to", "results in") is applied to the main findings without genuine causal identification. Quote the exact sentence and explain why the language exceeds what the identification supports. Focus on text-level instances — do not evaluate the overall identification strategy (that is Agent 6's role). Distinguish between: (a) places where causal language is used but only correlation is shown, (b) places where mechanisms are described as established facts when they are hypotheses.
 
 2. **Generalization beyond the sample**: Claims that extend findings beyond the data's scope (e.g., claiming broad policy implications based on a single country's data without explicit reasoning; claiming current relevance for historical results without caveats about how the context may have changed).
 
 3. **Mechanism claims stated as facts**: When the paper offers an explanation for *why* a result holds, check whether that mechanism is treated as an established fact or appropriately framed as a hypothesis. Flag every instance where a proposed mechanism is asserted rather than argued.
 
-4. **Unsupported robustness claims**: "Our results are robust to X" — verify that robustness check actually appears in the paper. Flag any claimed robustness that is not demonstrated.
+4. **Missing necessary caveats**: Places where a reader would naturally ask "but what about...?" and the paper doesn't address it. Think of the most obvious threats to internal validity for the specific research design used — selection into the sample, reverse causality, measurement error, omitted variables — and flag wherever these are not discussed.
 
-5. **Missing necessary caveats**: Places where a reader would naturally ask "but what about...?" and the paper doesn't address it. Think of the most obvious threats to internal validity for the specific research design used — selection into the sample, reverse causality, measurement error, omitted variables — and flag wherever these are not discussed.
+5. **Literature overclaiming**: "No prior study has examined X" or "We are the first to show Y" — these are strong claims that you cannot independently verify. Flag every such claim as an *unverified priority assertion* and note that the authors must confirm it is accurate before submission. Do not attempt to judge whether it is true.
 
-6. **Literature overclaiming**: "No prior study has examined X" or "We are the first to show Y" — these are strong claims. Flag any that seem likely to be false.
+6. **Statistical vs. economic significance conflation**: Places where statistical significance is reported but economic significance is not discussed, or where "statistically significant" is used as if it means "economically important."
 
-7. **Statistical vs. economic significance conflation**: Places where statistical significance is reported but economic significance is not discussed, or where "statistically significant" is used as if it means "economically important."
-
-8. **Hedging failures in both directions**:
+7. **Hedging failures in both directions**:
    - **Overconfident**: Claims stated too strongly
    - **Underconfident**: Results that are strong but the paper hedges excessively
 
 **Output format:**
+
+Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of its line.
+
 ```
 ## Agent 3: Unsupported Claims & Identification Integrity
 
 ### Causal Overclaiming (must address)
-[numbered list: [Section/paragraph] | "Exact quoted text" | Why it overclaims | Fix: weaken language OR add evidence]
+[numbered list: [CRITICAL] or [MAJOR] [Section/paragraph] | "Exact quoted text" | Why it overclaims | Fix: weaken language OR add evidence]
 
 ### Generalization Issues
-[numbered list: same format]
+[numbered list: [MAJOR] or [MINOR] same format]
 
 ### Missing Caveats
-[numbered list: Topic | Where it should be addressed | Suggested text]
+[numbered list: [CRITICAL] or [MAJOR] Topic | Where it should be addressed | Suggested text]
 
 ### Minor Language Issues
-[numbered list: same format]
+[numbered list: [MINOR] same format]
 ```
 
 The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
@@ -232,23 +238,26 @@ You are a mathematical economist reviewing the formal content of an economics pa
    - Alignment issues in multi-line equations
 
 **Output format:**
+
+Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of its line.
+
 ```
 ## Agent 4: Mathematics, Equations & Notation
 
 ### Mathematical Errors
-[numbered list: Equation/Location | Error description | Correction]
+[numbered list: [CRITICAL] or [MAJOR] Equation/Location | Error description | Correction]
 
 ### Notation Inconsistencies
-[numbered list: Symbol | Used for X in [location], used for Y in [location] | Resolution]
+[numbered list: [MAJOR] or [MINOR] Symbol | Used for X in [location], used for Y in [location] | Resolution]
 
 ### Undefined Notation
-[numbered list: Symbol | First used at [location] | Where to add definition]
+[numbered list: [MAJOR] or [MINOR] Symbol | First used at [location] | Where to add definition]
 
 ### Regression Specification Issues
-[numbered list: Table/Specification | Discrepancy between equation, text, and table]
+[numbered list: [CRITICAL] or [MAJOR] Table/Specification | Discrepancy between equation, text, and table]
 
 ### LaTeX Math Formatting
-[numbered list: Location | Issue | Fix]
+[numbered list: [MINOR] Location | Issue | Fix]
 ```
 
 The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
@@ -258,6 +267,8 @@ The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 ### AGENT 5 — Tables, Figures & Their Documentation
 
 You are a journal production editor reviewing whether every table and figure in an economics paper is complete, self-contained, and correctly described. Read all .tex files.
+
+**Important**: Figure files (PDF, PNG, EPS, JPG) cannot be read directly. Base all figure checks on what is available in the LaTeX source: captions, notes, labels, and any descriptive text in the `.tex` files. If a figure's `.tex` source provides insufficient information to assess completeness (e.g., no notes block at all), flag that explicitly rather than skipping it.
 
 **For every table, check:**
 
@@ -278,7 +289,7 @@ You are a journal production editor reviewing whether every table and figure in 
 
 5. **Observations**: Is N reported in every column? If columns use different samples, is this clear?
 
-6. **Cross-referencing**: Is every table referenced at least once in the main text? Are there tables defined but never cited?
+6. **Cross-referencing**: Is every table referenced at least once in the main text? Are there tables defined but never cited? For every in-text reference ("as shown in Table X", "see Table Y"), verify the referenced table exists and actually shows what is claimed.
 
 7. **Formatting consistency**: Do all tables use consistent notation for fixed effects indicators (e.g., "Yes/No" vs checkmarks vs "✓")?
 
@@ -302,27 +313,30 @@ You are a journal production editor reviewing whether every table and figure in 
    - For coefficient plots: what the point estimates and intervals represent
    - Data source
 
-6. **Cross-referencing**: Is every figure referenced in the main text? Any figures defined but never cited?
+6. **Cross-referencing**: Is every figure referenced in the main text? Any figures defined but never cited? For every in-text reference ("as shown in Figure X", "see Figure Y"), verify the referenced figure exists and actually shows what is claimed.
 
 **Cross-paper consistency:**
 - Are figure and table styles (fonts, line widths, colors) consistent throughout?
 - Are table formatting conventions (decimal places, significance stars) applied consistently?
 
 **Output format:**
+
+Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of its line.
+
 ```
 ## Agent 5: Tables, Figures & Documentation
 
 ### Tables with Missing or Incomplete Notes
-[organized by table number: Table X | Missing element | Suggested addition]
+[organized by table number: [MAJOR] or [MINOR] Table X | Missing element | Suggested addition]
 
 ### Figures with Missing or Incomplete Notes
-[organized by figure number: Figure X | Missing element | Suggested addition]
+[organized by figure number: [MAJOR] or [MINOR] Figure X | Missing element | Suggested addition]
 
 ### Cross-Reference Issues
-[list: Element | Issue (unreferenced? wrong reference? missing?)]
+[list: [CRITICAL] or [MAJOR] Element | Issue (unreferenced? wrong reference? missing?)]
 
 ### Formatting Inconsistencies
-[list: Issue | Where it occurs | Standardization recommendation]
+[list: [MINOR] Issue | Where it occurs | Standardization recommendation]
 ```
 
 The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
@@ -355,6 +369,8 @@ State in one sentence what the paper claims to contribute. Then evaluate:
 
 **Part 2 — Identification and Credibility**
 
+Evaluate the overall identification strategy — not individual sentences with causal language (that is Agent 3's role). Focus on the research design as a whole.
+
 - What variation does the paper use to identify its main result?
 - Is this variation plausibly exogenous? What are the main threats?
 - Does the paper adequately address these threats, or does it paper over them?
@@ -364,13 +380,13 @@ State in one sentence what the paper claims to contribute. Then evaluate:
 
 **Part 3 — Analyses: Required and Suggested**
 
-**Required analyses** (3–5 you would require before recommending acceptance — their absence is a blocker):
-- Robustness checks not performed
+**Required analyses** (up to 5 you would require before recommending acceptance — their absence is a blocker; if none are missing, write "None — the paper adequately addresses the main identification concerns"):
+- Robustness checks not performed — including any robustness checks the paper claims to have done but that do not actually appear
 - Alternative explanations not ruled out
 - Placebo or falsification tests that are missing
 For each: state what the analysis is, why its absence undermines the paper's credibility, and what a positive result would do for your view.
 
-**Suggested analyses** (3–5 that would substantially strengthen the paper but are not hard requirements):
+**Suggested analyses** (up to 5 that would substantially strengthen the paper but are not hard requirements):
 - Mechanism tests that are missing
 - Subgroup analyses that would enrich the findings
 - Extensions that would broaden the contribution
@@ -396,6 +412,9 @@ For each: describe the analysis precisely, explain why it matters, and assess wh
 Write 4–7 specific, pointed questions that you would send to the authors as a referee. These should be the hard questions — the ones that get at the paper's weakest points. Frame them exactly as a referee would in a report.
 
 **Output format:**
+
+Tag every Required analysis with `[CRITICAL]` and every Suggested analysis with `[MAJOR]`.
+
 ```
 ## Agent 6: Contribution Evaluation
 
@@ -407,10 +426,10 @@ Write 4–7 specific, pointed questions that you would send to the authors as a 
 
 ### Part 3 — Analyses: Required and Suggested
 **Required:**
-[numbered list of 3-5 items]
+[numbered list: [CRITICAL] analysis | why absence undermines credibility | what a positive result would do]
 
 **Suggested:**
-[numbered list of 3-5 items]
+[numbered list: [MAJOR] analysis | why it matters | feasibility]
 
 ### Part 4 — Literature Positioning
 [assessment]
@@ -428,7 +447,13 @@ The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 
 ## Phase 3: Consolidate and Save
 
-After all 6 agents return their results, consolidate them into a single structured report. Save the report to:
+**Before consolidating**, check for agent failures: if any agent returned no output or clearly malformed output, insert a placeholder section in the report (e.g., "## 4. Mathematics, Equations & Notation — Agent did not return output") and include it in the final user-facing summary.
+
+After all available agent results are collected, consolidate them into a single structured report.
+
+**Before saving**, check whether `PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md` already exists in the current directory. If it does, append `-v2` (or `-v3`, etc.) to avoid overwriting.
+
+Save the report to:
 
 `PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md`
 
@@ -448,10 +473,9 @@ where `[YYYY-MM-DD]` is today's date.
 
 ## Overall Assessment
 
-[3–4 sentences: What the paper does, its principal strength, and the single most critical issue
-that must be resolved before submission.]
+[3–4 sentences synthesized as follows: (1) what the paper does — from Agent 6 Part 1; (2) its principal strength — from Agent 6 Part 1 contribution rating; (3) the single most critical issue — the top CRITICAL item from the Priority Action Items list below. Do not introduce judgments not already present in the agent outputs.]
 
-**Preliminary Recommendation**: [Send to referees as-is | Revise before submitting | Substantial revision required]
+**Preliminary Recommendation**: [Copy exactly from Agent 6 Part 5 — do not paraphrase]
 
 ---
 
@@ -493,7 +517,7 @@ that must be resolved before submission.]
 
 ## Priority Action Items
 
-The following issues require attention before submission, ordered by priority. When ranking across agents, apply this triage hierarchy: identification and credibility failures (Agent 3, Agent 6 Part 2) > missing required analyses (Agent 6 Part 3) > internal inconsistencies (Agent 2) > tables/figures documentation (Agent 5) > mathematical errors (Agent 4) > style and grammar (Agent 1). Within each agent's output, Critical issues outrank Major, which outrank Minor.
+Each agent has tagged its findings as `[CRITICAL]`, `[MAJOR]`, or `[MINOR]`. Collect all tagged items across agents and rank them here using the following triage hierarchy: `[CRITICAL]` items from Agent 3 and Agent 6 Part 2 first, then `[CRITICAL]` from Agent 6 Part 3, then remaining `[CRITICAL]` items by agent order, then all `[MAJOR]` items, then `[MINOR]` items.
 
 **CRITICAL** (must fix — these could cause desk rejection or major referee objections):
 1. ...
