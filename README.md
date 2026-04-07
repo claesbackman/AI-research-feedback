@@ -1,32 +1,32 @@
 # Using AI to get feedback on your research
 
-A collection of agent skills for academic research review. This fork packages the repository as a standard `npx skills add` source so it can be installed into common skills-aware agents such as Claude Code, Codex, Cursor, OpenCode, and others supported by the [`skills`](https://github.com/vercel-labs/skills) CLI. This tool was originally developed by [Claes Bäckman](https://claesbackman.com).
+A collection of agent skills for academic research review. This repository is packaged as a standard `npx skills add` source so it can be installed into common skills-aware agents such as Claude Code, Codex, Cursor, OpenCode, and others supported by the [`skills`](https://github.com/vercel-labs/skills) CLI. This tool was originally developed by [Claes Bäckman](https://claesbackman.com).
 
 ## Install
 
 List the skills exposed by this repository:
 
 ```bash
-npx skills add iF2007/AI-research-feedback --list
+npx skills add claesbackman/AI-research-feedback --list
 ```
 
 Install a specific skill:
 
 ```bash
-npx skills add iF2007/AI-research-feedback --skill review-paper
+npx skills add claesbackman/AI-research-feedback --skill review-paper
 ```
 
 Install to a specific agent:
 
 ```bash
-npx skills add iF2007/AI-research-feedback --skill review-paper -a codex
-npx skills add iF2007/AI-research-feedback --skill review-paper -a claude-code
+npx skills add claesbackman/AI-research-feedback --skill review-paper -a codex
+npx skills add claesbackman/AI-research-feedback --skill review-paper -a claude-code
 ```
 
 Install all skills to all supported agents without prompts:
 
 ```bash
-npx skills add iF2007/AI-research-feedback --all
+npx skills add claesbackman/AI-research-feedback --all
 ```
 
 ## Repository Layout
