@@ -31,15 +31,16 @@ npx skills add iF2007/AI-research-feedback --all
 
 ## Repository Layout
 
-- `.agents/skills/*/SKILL.md` contains the canonical, agent-neutral skills consumed by `npx skills add`.
+- Each skill lives in a top-level folder such as `review-paper/SKILL.md`.
+- The repository is intentionally flat so users can see the available skills directly.
 
 ## Skills in this repository
 
-- `.agents/skills/review-paper/SKILL.md`: Full referee-style paper review command.
-- `.agents/skills/review-paper-light/SKILL.md`: Fast 2-agent paper check.
-- `.agents/skills/review-paper-code/SKILL.md`: Paper-code reproducibility and alignment review.
-- `.agents/skills/review-pap/SKILL.md`: Pre-analysis plan review command.
-- `.agents/skills/review-grant/SKILL.md`: Grant proposal review command.
+- `review-paper/SKILL.md`: Full referee-style paper review command.
+- `review-paper-light/SKILL.md`: Fast 2-agent paper check.
+- `review-paper-code/SKILL.md`: Paper-code reproducibility and alignment review.
+- `review-pap/SKILL.md`: Pre-analysis plan review command.
+- `review-grant/SKILL.md`: Grant proposal review command.
 
 
 ## Skills
