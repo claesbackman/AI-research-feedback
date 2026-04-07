@@ -1,15 +1,46 @@
 # Using AI to get feedback on your research
 
-A collection of [Claude Code](https://claude.ai/code) skills for academic research review. This tool was developed by [Claes Bäckman](https://claesbackman.com).
+A collection of agent skills for academic research review. This repository is packaged as a standard `npx skills add` source so it can be installed into common skills-aware agents such as Claude Code, Codex, Cursor, OpenCode, and others supported by the [`skills`](https://github.com/vercel-labs/skills) CLI. This tool was originally developed by [Claes Bäckman](https://claesbackman.com).
 
+## Install
 
-## Skills in this folder
+List the skills exposed by this repository:
 
-- `Skills/review-paper.md`: Full referee-style paper review command.
-- `Skills/review-paper-light.md`: Fast 2-agent paper check.
-- `Skills/review-paper-code.md`: Paper-code reproducibility and alignment review.
-- `Skills/review-pap.md`: Pre-analysis plan review command.
-- `Skills/review-grant.md`: Grant proposal review command.
+```bash
+npx skills add claesbackman/AI-research-feedback --list
+```
+
+Install a specific skill:
+
+```bash
+npx skills add claesbackman/AI-research-feedback --skill review-paper
+```
+
+Install to a specific agent:
+
+```bash
+npx skills add claesbackman/AI-research-feedback --skill review-paper -a codex
+npx skills add claesbackman/AI-research-feedback --skill review-paper -a claude-code
+```
+
+Install all skills to all supported agents without prompts:
+
+```bash
+npx skills add claesbackman/AI-research-feedback --all
+```
+
+## Repository Layout
+
+- Each skill lives in a top-level folder such as `review-paper/SKILL.md`.
+- The repository is intentionally flat so users can see the available skills directly.
+
+## Skills in this repository
+
+- `review-paper/SKILL.md`: Full referee-style paper review command.
+- `review-paper-light/SKILL.md`: Fast 2-agent paper check.
+- `review-paper-code/SKILL.md`: Paper-code reproducibility and alignment review.
+- `review-pap/SKILL.md`: Pre-analysis plan review command.
+- `review-grant/SKILL.md`: Grant proposal review command.
 
 
 ## Skills
@@ -28,20 +59,6 @@ Runs a rigorous pre-submission review of an academic paper, simulating the scrut
 | 4 | Mathematics, equations, and notation |
 | 5 | Tables, figures, and their documentation |
 | 6 | Contribution evaluation (adversarial journal-specific referee) |
-
-**Installation:**
-
-```bash
-curl -o ~/.claude/commands/review-paper.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper.md
-```
-
-For a project-local install:
-
-```bash
-mkdir -p .claude/commands && curl -o .claude/commands/review-paper.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper.md
-```
 
 **Usage:**
 
@@ -73,26 +90,12 @@ Saves a consolidated report to `PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md` in the cu
 
 **Requirements:**
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
+- An agent that can consume standard `SKILL.md`-based skills via `npx skills add`. Parallel-agent support gives the best results.
 - A LaTeX paper. The skill reads `.tex` files and optionally inspects figure and table files.
 
 ### `review-paper-light` — Quick Paper Check
 
 Runs a fast 2-agent pre-submission check for an economics paper. It focuses on contribution, identification, causal overclaiming, and unsupported claims, and is designed for quick iteration before a full review.
-
-**Installation:**
-
-```bash
-curl -o ~/.claude/commands/review-paper-light.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper-light.md
-```
-
-For a project-local install:
-
-```bash
-mkdir -p .claude/commands && curl -o .claude/commands/review-paper-light.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper-light.md
-```
 
 **Usage:**
 
@@ -109,7 +112,7 @@ Saves a short prioritized report to `QUICK_REVIEW_[YYYY-MM-DD].md` in the curren
 
 **Requirements:**
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
+- An agent that can consume standard `SKILL.md`-based skills via `npx skills add`. Parallel-agent support gives the best results.
 - A LaTeX paper.
 
 ### `review-paper-code` — Paper-Code Reproducibility Review
@@ -146,26 +149,12 @@ Writes a report to `code_review_report.md` in the current working directory.
 
 **Requirements:**
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
+- An agent that can consume standard `SKILL.md`-based skills via `npx skills add`. Parallel-agent support gives the best results.
 - A LaTeX paper plus Stata, R, or Python analysis code.
 
 ### `review-pap` — Pre-Analysis Plan Review
 
 Runs a 6-agent pre-submission review of a pre-analysis plan (PAP). The command auto-detects the main PAP and supporting files, then evaluates writing quality, specification completeness, internal consistency, identification strategy, statistical analysis, implementation details, and registry or journal fit.
-
-**Installation:**
-
-```bash
-curl -o ~/.claude/commands/review-pap.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-pap.md
-```
-
-For a project-local install:
-
-```bash
-mkdir -p .claude/commands && curl -o .claude/commands/review-pap.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-pap.md
-```
 
 **Usage:**
 
@@ -197,26 +186,12 @@ Saves a consolidated report to `PAP_REVIEW_[YYYY-MM-DD].md` in the current direc
 
 **Requirements:**
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
+- An agent that can consume standard `SKILL.md`-based skills via `npx skills add`. Parallel-agent support gives the best results.
 - A PAP in a readable format such as `.md`, `.txt`, or `.tex`. The skill can also attempt to work with `.pdf` and `.docx`, while noting accessibility limitations if needed.
 
 ### `review-grant` — Grant Proposal Review
 
 Runs a 6-agent pre-submission panel review of a grant proposal. The command auto-detects the main proposal and supporting documents, then evaluates clarity, compliance signals, internal consistency, significance, innovation, research design, feasibility, budget logic, team readiness, and fit to the target funder or program.
-
-**Installation:**
-
-```bash
-curl -o ~/.claude/commands/review-grant.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-grant.md
-```
-
-For a project-local install:
-
-```bash
-mkdir -p .claude/commands && curl -o .claude/commands/review-grant.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-grant.md
-```
 
 **Usage:**
 
@@ -247,7 +222,7 @@ Saves a consolidated report to `GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md` in the cu
 
 **Requirements:**
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
+- An agent that can consume standard `SKILL.md`-based skills via `npx skills add`. Parallel-agent support gives the best results.
 - A proposal in a readable format such as `.md`, `.txt`, or `.tex`. The skill can also attempt to work with `.pdf` and `.docx`, while noting accessibility limitations if needed.
 
 ## License

@@ -1,4 +1,5 @@
 ---
+name: review-pap
 description: Run a 6-agent pre-submission review of a pre-analysis plan (PAP) for a specified registration target or journal
 ---
 

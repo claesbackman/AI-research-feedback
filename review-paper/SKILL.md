@@ -1,4 +1,5 @@
 ---
+name: review-paper
 description: Run a 6-agent pre-submission referee report for an academic paper targeting a specified journal
 ---
 
