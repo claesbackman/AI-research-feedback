@@ -31,17 +31,15 @@ npx skills add iF2007/AI-research-feedback --all
 
 ## Repository Layout
 
-- `Skills/*.md` contains the original source files.
-- `.agents/skills/*/SKILL.md` contains the generated, agent-neutral packaging consumed by `npx skills add`.
-- `scripts/generate_agent_skills.py` regenerates `.agents/skills` from `Skills/` without changing the instruction bodies.
+- `.agents/skills/*/SKILL.md` contains the canonical, agent-neutral skills consumed by `npx skills add`.
 
 ## Skills in this repository
 
-- `Skills/review-paper.md`: Full referee-style paper review command.
-- `Skills/review-paper-light.md`: Fast 2-agent paper check.
-- `Skills/review-paper-code.md`: Paper-code reproducibility and alignment review.
-- `Skills/review-pap.md`: Pre-analysis plan review command.
-- `Skills/review-grant.md`: Grant proposal review command.
+- `.agents/skills/review-paper/SKILL.md`: Full referee-style paper review command.
+- `.agents/skills/review-paper-light/SKILL.md`: Fast 2-agent paper check.
+- `.agents/skills/review-paper-code/SKILL.md`: Paper-code reproducibility and alignment review.
+- `.agents/skills/review-pap/SKILL.md`: Pre-analysis plan review command.
+- `.agents/skills/review-grant/SKILL.md`: Grant proposal review command.
 
 
 ## Skills
