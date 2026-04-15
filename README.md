@@ -33,14 +33,14 @@ Runs a rigorous pre-submission review of an academic paper, simulating the scrut
 
 ```bash
 curl -o ~/.claude/commands/review-paper.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper.md
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper.md
 ```
 
 For a project-local install:
 
 ```bash
 mkdir -p .claude/commands && curl -o .claude/commands/review-paper.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper.md
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper.md
 ```
 
 **Usage:**
@@ -84,14 +84,14 @@ Runs a fast 2-agent pre-submission check for an economics paper. It focuses on c
 
 ```bash
 curl -o ~/.claude/commands/review-paper-light.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper-light.md
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-light.md
 ```
 
 For a project-local install:
 
 ```bash
 mkdir -p .claude/commands && curl -o .claude/commands/review-paper-light.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper-light.md
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-light.md
 ```
 
 **Usage:**
@@ -157,14 +157,14 @@ Runs a 6-agent pre-submission review of a pre-analysis plan (PAP). The command a
 
 ```bash
 curl -o ~/.claude/commands/review-pap.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-pap.md
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-pap.md
 ```
 
 For a project-local install:
 
 ```bash
 mkdir -p .claude/commands && curl -o .claude/commands/review-pap.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-pap.md
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-pap.md
 ```
 
 **Usage:**
@@ -208,14 +208,14 @@ Runs a 6-agent pre-submission panel review of a grant proposal. The command auto
 
 ```bash
 curl -o ~/.claude/commands/review-grant.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-grant.md
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-grant.md
 ```
 
 For a project-local install:
 
 ```bash
 mkdir -p .claude/commands && curl -o .claude/commands/review-grant.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-grant.md
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-grant.md
 ```
 
 **Usage:**
