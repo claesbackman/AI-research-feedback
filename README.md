@@ -32,7 +32,7 @@ Runs a rigorous pre-submission review of an academic paper, simulating the scrut
 **Installation:**
 
 ```bash
-curl -o ~/.claude/commands/review-paper.md \
+mkdir -p ~/.claude/commands && curl -o ~/.claude/commands/review-paper.md \
   https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper.md
 ```
 
@@ -83,7 +83,7 @@ Runs a fast 2-agent pre-submission check for an economics paper. It focuses on c
 **Installation:**
 
 ```bash
-curl -o ~/.claude/commands/review-paper-light.md \
+mkdir -p ~/.claude/commands && curl -o ~/.claude/commands/review-paper-light.md \
   https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-light.md
 ```
 
@@ -156,7 +156,7 @@ Runs a 6-agent pre-submission review of a pre-analysis plan (PAP). The command a
 **Installation:**
 
 ```bash
-curl -o ~/.claude/commands/review-pap.md \
+mkdir -p ~/.claude/commands && curl -o ~/.claude/commands/review-pap.md \
   https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-pap.md
 ```
 
@@ -207,7 +207,7 @@ Runs a 6-agent pre-submission panel review of a grant proposal. The command auto
 **Installation:**
 
 ```bash
-curl -o ~/.claude/commands/review-grant.md \
+mkdir -p ~/.claude/commands && curl -o ~/.claude/commands/review-grant.md \
   https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-grant.md
 ```
 
