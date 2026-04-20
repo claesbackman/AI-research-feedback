@@ -11,6 +11,7 @@ Parse `$ARGUMENTS` as follows:
   - **Top-5 economics**: `AER`, `QJE`, `JPE`, `Econometrica`, `REStud`
   - **Finance**: `JF`, `JFE`, `RFS`, `JFQA`
   - **Macro**: `AEJMacro`, `JME`, `RED`
+  - **Accounting**: `TAR`, `JAR`, `JAE`, `CAR`, `RAST`, `AOS`
   - (case-insensitive; users can add further journals by editing this list in the skill file)
 - If the first token of `$ARGUMENTS` matches one of these names, treat it as the **target journal** and treat any remaining text as the **file path**.
 - If no token matches a journal name, treat the entire `$ARGUMENTS` as a file path and set the target journal to `top-field` (meaning the review applies high general standards without a specific journal persona).
@@ -347,8 +348,7 @@ Table files: [LIST TABLE PATHS]
 
 ### AGENT 6 — Contribution Evaluation (Adversarial Top-5 Referee)
 
-You are a demanding associate editor. Adopt the persona and editorial norms appropriate to `TARGET_JOURNAL`:
-- If it is a specific journal (e.g., AER, QJE, JPE, Econometrica, REStud, JF, JFE, RFS, JFQA, AEJMacro, JME, RED), apply that journal's scope, style preferences, and standards for what constitutes a publishable contribution — including its typical methodological bar, preferred framing, and audience expectations.
+- If it is a specific journal (e.g., AER, QJE, JPE, Econometrica, REStud, JF, JFE, RFS, JFQA, AEJMacro, JME, RED, TAR, JAR, JAE, CAR, RAST, AOS), apply that journal's scope, style preferences, and standards for what constitutes a publishable contribution — including its typical methodological bar, preferred framing, and audience expectations.
 - If `TARGET_JOURNAL` is `top-field`, apply high general standards for a leading field journal without a specific journal persona.
 
 In all cases: you have read thousands of papers and have extremely high standards. You are deciding whether this paper deserves to be sent to referees, or whether it should be desk rejected. You are not hostile, but you are exacting, specific, and rigorous. You will read the complete paper and produce a structured evaluation.
@@ -442,6 +442,17 @@ Tag every Required analysis with `[CRITICAL]` and every Suggested analysis with 
 ```
 
 The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
+
+**Journal-specific norms to apply when TARGET_JOURNAL is an accounting journal:**
+
+- **TAR (The Accounting Review)** — AAA's flagship. Values balanced contributions across empirical rigor and conceptual framing; expects clear articulation of how the paper advances accounting knowledge (not just economics more broadly). Institutional grounding matters; purely technical contributions without an accounting-specific motivation are a weak fit. Tolerant of both archival and analytical methods.
+- **JAR (Journal of Accounting Research)** — Chicago school. Heavy emphasis on clean identification, measurement validity, and methodological precision. Skeptical of weak proxies and indirect measures. For analytical work, values economic foundations and well-specified primitives. Expect exacting attention to the link between theory and empirical design.
+- **JAE (Journal of Accounting and Economics)** — Rochester school. Strong preference for economic theory grounding, positive accounting tradition. Empirical papers must have clear economic mechanisms and tight identification. Analytical papers should yield testable predictions. Values parsimony and rigor over breadth.
+- **CAR (Contemporary Accounting Research)** — broader methodological scope than the Big Three. Accepts qualitative, behavioral (experimental), analytical, and archival work. Canadian school influence. Slightly more flexible on identification standards than JAR/JAE but still top-tier on contribution.
+- **RAST (Review of Accounting Studies)** — balanced top-tier. Broad scope across archival, analytical, experimental, and disclosure research. Emphasizes novel insights and well-executed designs. No single dominant methodological stance.
+- **AOS (Accounting, Organizations and Society)** — interpretive and critical accounting. Welcomes qualitative, historical, sociological, and critical-theory approaches. Evaluates contribution very differently from the Big Three: positivist research with weak theoretical engagement is a poor fit, while rich qualitative work with strong theoretical framing is valued.
+
+When TARGET_JOURNAL is an accounting journal, Part 1 (Central Contribution) should explicitly address accounting-specific contribution (how does this advance accounting knowledge, not just economics?). Part 2 (Identification) should apply the specific journal's proxy/measurement standards. Part 5 (Journal Fit) should be honest about whether the paper's methodological orientation matches the journal's editorial culture.
 
 ---
 
