@@ -1,10 +1,12 @@
 ---
-description: Run a fast 2-agent pre-submission check for an economics paper — focuses on contribution, identification, and causal overclaiming. Completes in ~1 minute.
+description: Run a fast 2-agent pre-submission check for an economics or accounting paper. Empirical mode focuses on contribution, identification, and causal overclaiming; theory mode (--theory) focuses on contribution, modelling credibility, and claim-vs-proven discipline. Auto-detects mode. Completes in ~1 minute.
 ---
 
-You are coordinating a fast pre-submission check of an economics paper. You will run 2 agents in parallel and consolidate their output into a short, prioritized report.
+You are coordinating a fast pre-submission check of an economics or accounting paper. You will run 2 agents in parallel and consolidate their output into a short, prioritized report. The check adapts to whether the paper is empirical or analytical (theory) — see Phase 1, Step 0.
 
 ## Phase 1: Discover the Paper
+
+**Step 0 — Resolve review mode.** Scan `$ARGUMENTS` for a mode flag in any position: `--theory` (aliases `theory`, `--analytical`) sets `REVIEW_MODE = theory`; `--empirical` (aliases `empirical`, `--archival`) sets `REVIEW_MODE = empirical`. Remove the matched token from `$ARGUMENTS`. If no flag is present, set `REVIEW_MODE = auto`.
 
 If a file path is provided in `$ARGUMENTS`, use it as the main LaTeX file. Otherwise, auto-detect:
 
@@ -18,13 +20,17 @@ Record:
 - Full path of each .tex file
 - Paper title, authors, and abstract
 
+**Resolve review mode if `auto`.** From the .tex content, set `theory` if it contains proof/proposition/lemma/theorem/assumption environments and equilibrium/best-response language with no regression tables; set `empirical` if it has regression tables and estimation/identification language. If mixed or unclear, default to `empirical`. State the resolved mode to the user and note they can override with `--theory`/`--empirical`.
+
 ## Phase 2: Launch 2 Agents in Parallel
 
-In a **single message**, launch both agents using the Agent tool with `subagent_type: "general-purpose"`.
+In a **single message**, launch both agents using the Agent tool with `subagent_type: "general-purpose"`. For each agent below, an **[EMPIRICAL VARIANT]** and a **[THEORY VARIANT]** are given; launch the one matching `REVIEW_MODE`.
 
 ---
 
-### AGENT A — Contribution, Identification & Required Analyses
+### AGENT A — Contribution, Identification & Required Analyses — [EMPIRICAL VARIANT]
+
+*Launch when `REVIEW_MODE = empirical`; otherwise use AGENT A — [THEORY VARIANT] below.*
 
 You are a demanding associate editor at a top economics journal. Read all .tex files completely. Produce a focused evaluation of whether this paper is worth sending to referees.
 
@@ -77,7 +83,63 @@ The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 
 ---
 
-### AGENT B — Causal Overclaiming & Unsupported Claims
+### AGENT A — Contribution, Modelling Credibility & Required Additions — [THEORY VARIANT]
+
+*Launch when `REVIEW_MODE = theory` instead of the empirical Agent A above.*
+
+You are a demanding associate editor at a top economics or accounting journal evaluating an analytical paper. Read all .tex files completely. Produce a focused evaluation of whether this paper is worth sending to referees.
+
+**Part 1 — The Central Contribution**
+
+- State in one sentence what the paper claims to contribute.
+- Is the result a genuinely new economic insight / mechanism / characterization, or a known result re-derived in new notation or a new setting?
+- What is the closest prior model? What does this paper add beyond it?
+- Does the result change how researchers would think about the topic?
+- Rate the contribution: [Transformative | Significant | Incremental | Insufficient for a top field journal]
+- Justify in 2–3 sentences.
+
+**Part 2 — Modelling Credibility**
+
+- Is the model the right abstraction for the question, or does it bundle in features that obscure the force of interest? Could a simpler model deliver the same insight?
+- Which one or two assumptions are doing the real work, and does any of them quietly assume the conclusion?
+- Which modelling choice would a seminar audience most want relaxed, and would the headline result plausibly survive it?
+- Is the equilibrium concept appropriate, and — if there are multiple equilibria — is the selected one defensible?
+
+**Part 3 — Required Additions**
+
+List up to 5 additions whose absence is a blocker for acceptance: a missing robustness result the headline claim needs, a characterization the paper promises but never derives, an existence/uniqueness result it relies on but never proves, or a degenerate case the model can reach but assumes away. For each: state what it is, why its absence undermines the contribution, and what establishing it would do for your view. If nothing is missing, write "None — the model and results adequately support the contribution."
+
+Tag each required addition `[CRITICAL]`.
+
+**Part 4 — Pointed Questions to the Authors**
+
+Write 3–5 specific, pointed questions that get at the paper's weakest points (the load-bearing assumption, the robustness it does not show, the gap between what is proven and what is claimed). Frame them as a referee would.
+
+**Output format:**
+
+```
+## Agent A: Contribution & Modelling Credibility (Theory)
+
+### Part 1 — Central Contribution
+[assessment + rating]
+
+### Part 2 — Modelling Credibility
+[assessment]
+
+### Part 3 — Required Additions
+[numbered list: [CRITICAL] Addition | Why absence matters | What establishing it would do]
+
+### Part 4 — Questions to the Authors
+[numbered list of 3–5 questions]
+```
+
+The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
+
+---
+
+### AGENT B — Causal Overclaiming & Unsupported Claims — [EMPIRICAL VARIANT]
+
+*Launch when `REVIEW_MODE = empirical`; otherwise use AGENT B — [THEORY VARIANT] below.*
 
 You are a skeptical econometrician enforcing "claim discipline." Read all .tex files and flag every place where the paper overstates its evidence.
 
@@ -119,6 +181,55 @@ The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 
 ---
 
+### AGENT B — Claim Discipline & Result Integrity — [THEORY VARIANT]
+
+*Launch when `REVIEW_MODE = theory` instead of the empirical Agent B above.*
+
+You enforce "claim discipline" for an analytical paper: every claim in the prose must be backed by a stated, proven result, and no more. Read all .tex files and flag the text-to-result gap (do not re-derive proofs).
+
+**What to check:**
+
+1. **Prose claims exceeding proven results**: Flag sentences (especially in intro/abstract/conclusion) that state a result more strongly, more generally, or with broader scope than the corresponding proposition/lemma establishes. Quote the sentence and name the result it should map to (or "none").
+
+2. **Comparative statics asserted but not derived**: When the text says a quantity increases/decreases/is non-monotonic/is U-shaped in a parameter, verify a result or explicit derivative establishes that sign/shape over the stated range. Flag asserted comparative statics with no backing, and local-vs-global scope mismatches.
+
+3. **Equilibrium-selection sleight of hand**: With multiple equilibria, flag claims stated as unconditional that hold only for the selected equilibrium, and belief restrictions (e.g., passive beliefs) used in a proof but not stated where the result is claimed.
+
+4. **Existence/uniqueness overreach**: Flag existence or uniqueness claimed in the text but not backed by a result under the stated conditions (or uniqueness claimed where only existence is proven).
+
+5. **Robustness/generality overclaiming**: Flag "robust to", "holds generally", "does not depend on" without a supporting proof or extension. Note each as an unverified robustness assertion to back or demote to a conjecture.
+
+6. **Model-to-world overreach**: Flag policy/real-world implications drawn from the model without acknowledging they are conditional on the model's assumptions.
+
+7. **Priority assertions**: Flag "no prior model has shown X" / "we are the first to characterize Y" as unverified priority assertions to confirm. Do not judge truth.
+
+Tag every issue `[CRITICAL]`, `[MAJOR]`, or `[MINOR]`.
+
+**Output format:**
+
+```
+## Agent B: Claim Discipline & Result Integrity (Theory)
+
+### Claims Exceeding Proven Results
+[numbered list: [CRITICAL] or [MAJOR] Section | "Exact quoted text" | Result it should map to (or none) | Why it overclaims | Fix]
+
+### Comparative Statics Without Derivation
+[numbered list: [CRITICAL] or [MAJOR] Claimed sign/shape | Parameter | Backing result (or none) | Fix]
+
+### Equilibrium-Selection / Existence-Uniqueness Issues
+[numbered list: [MAJOR] or [MINOR] Claim | What is actually proven | Fix]
+
+### Robustness / Generality Overclaiming
+[numbered list: [MAJOR] or [MINOR] Claim | Back with proof OR demote to conjecture]
+
+### Other Issues
+[numbered list: [MAJOR] or [MINOR] same format]
+```
+
+The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
+
+---
+
 ## Phase 3: Consolidate and Save
 
 After both agents return, consolidate into a single report.
@@ -148,11 +259,15 @@ Save to: `QUICK_REVIEW_[YYYY-MM-DD].md`
 
 ## 1. Contribution & Identification
 
+*(In theory mode, title this section "Contribution & Modelling Credibility".)*
+
 [Agent A output]
 
 ---
 
 ## 2. Causal Overclaiming & Unsupported Claims
+
+*(In theory mode, title this section "Claim Discipline & Result Integrity".)*
 
 [Agent B output]
 
@@ -160,7 +275,7 @@ Save to: `QUICK_REVIEW_[YYYY-MM-DD].md`
 
 ## Priority Action Items
 
-Collect all tagged items and rank: `[CRITICAL]` first (identification and causal overclaiming items before others), then `[MAJOR]`, then `[MINOR]`.
+Collect all tagged items and rank: `[CRITICAL]` first (in empirical mode, identification and causal-overclaiming items before others; in theory mode, required additions and claims-exceeding-results before others), then `[MAJOR]`, then `[MINOR]`.
 
 **CRITICAL** (could cause desk rejection or major objections):
 1. ...

@@ -49,7 +49,15 @@ mkdir -p .claude/commands && curl -o .claude/commands/review-paper.md \
 /review-paper
 /review-paper QJE
 /review-paper JF path/to/main.tex
+/review-paper --theory TAR path/to/main.tex
+/review-paper JAE --empirical path/to/main.tex
 ```
+
+**Review mode (theory vs. empirical):**
+
+The command runs in one of two modes. **Empirical mode** is the original behaviour (identification, causal overclaiming, regression-spec and table checks). **Theory mode** retargets three of the six agents for analytical/game-theoretic papers: claim discipline becomes "does the prose claim more than the propositions prove" (including undriven comparative statics and equilibrium-selection sleight of hand); the math agent audits proofs, assumption invocation, boundary cases, and equilibrium-concept consistency rather than regression specs; and the contribution agent evaluates modelling credibility (is the model the right abstraction, which assumptions do the work, do results survive perturbation) rather than econometric identification. Tables/figures checks are reinterpreted for calibration plots and region diagrams.
+
+The mode is set by a `--theory` or `--empirical` flag, which may appear in any position. If no flag is given, the command auto-detects from the paper (proof/proposition environments and equilibrium language → theory; regression tables and estimation language → empirical) and falls back to empirical when signals are mixed. For reliability, pass the flag explicitly until you have seen auto-detection behave on your papers.
 
 **Supported journals:**
 
@@ -58,6 +66,7 @@ mkdir -p .claude/commands && curl -o .claude/commands/review-paper.md \
 | Top-5 economics | `AER`, `QJE`, `JPE`, `Econometrica`, `REStud` |
 | Finance | `JF`, `JFE`, `RFS`, `JFQA` |
 | Macro | `AEJMacro`, `JME`, `RED` |
+| Accounting | `TAR`, `JAR`, `JAE`, `CAR`, `RAST`, `AOS` |
 
 If no journal is specified, the command applies high general standards without a specific journal persona. If no path is provided, it auto-detects the main `.tex` file.
 
@@ -73,7 +82,7 @@ Saves a consolidated report to `PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md` in the cu
 
 **Requirements:**
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent. (Verify the agent-spawning interface against your current Claude Code version; the commands assume `subagent_type: "general-purpose"`.)
 - A LaTeX paper. The skill reads `.tex` files and optionally inspects figure and table files.
 
 ### `review-paper-light` — Quick Paper Check
@@ -99,7 +108,10 @@ mkdir -p .claude/commands && curl -o .claude/commands/review-paper-light.md \
 ```text
 /review-paper-light
 /review-paper-light path/to/main.tex
+/review-paper-light --theory path/to/main.tex
 ```
+
+In **theory mode** (`--theory`, or auto-detected), the two agents become: contribution + modelling credibility (is the model the right abstraction, which assumptions do the work, would the result survive a relaxed assumption, plus required additions like a missing robustness result or unproven existence claim), and claim discipline (prose claims exceeding proven results, undriven comparative statics, equilibrium-selection and existence/uniqueness overreach). In empirical mode the original contribution/identification and causal-overclaiming agents run.
 
 If no path is provided, the command auto-detects the main `.tex` file.
 
@@ -114,17 +126,17 @@ Saves a short prioritized report to `QUICK_REVIEW_[YYYY-MM-DD].md` in the curren
 
 ### `review-paper-code` — Paper-Code Reproducibility Review
 
-Runs a paper-code review for empirical research projects. It discovers the main LaTeX paper and analysis code, checks reproducibility and code quality, maps the paper's main empirical claims to the code, and writes a constructive report highlighting strengths, gaps to verify, and concrete next steps.
+Runs a paper-code review. In **empirical mode** it discovers the main LaTeX paper and analysis code, checks reproducibility and code quality, maps the paper's main empirical claims to the code, and writes a constructive report. In **theory mode** (`--theory`, or auto-detected) it treats the code as the paper's numerical/analytical support — calibration scripts, numerical-example generators, equilibrium/threshold computation, symbolic derivations, and figure-producing scripts — and maps the paper's propositions, numerical examples, and figures to the code that verifies and generates them.
 
 **What it reviews:**
 
-| Area | Focus |
-|---|---|
-| Paper discovery | Main `.tex` file and included sections |
-| Code discovery | Stata, R, and Python scripts in common analysis folders |
-| Reproducibility | Paths, seeds, outputs, dependencies, run order, documentation |
-| Code quality | Structure, commented-out code, opaque transforms, major thresholds |
-| Paper-code alignment | Tables, variables, sample restrictions, methods, clustering, fixed effects |
+| Area | Empirical focus | Theory focus |
+|---|---|---|
+| Paper discovery | Main `.tex` file and included sections | Same |
+| Code discovery | Stata, R, Python in analysis folders | Adds Julia, MATLAB, Mathematica/Wolfram, notebooks |
+| Reproducibility | Paths, seeds, outputs, dependencies, run order | Parameter values match paper, seeds for stochastic steps, figures regenerated, numerical-method robustness, symbolic checks, environment capture |
+| Code quality | Structure, commented-out code, opaque transforms | Same, plus convergence/tolerance/multiplicity handling and magic constants |
+| Alignment | Tables, variables, sample restrictions, methods, clustering, FEs | Propositions, numerical examples, figures, thresholds/equilibria, parameter consistency |
 
 **Usage:**
 
@@ -133,12 +145,15 @@ Runs a paper-code review for empirical research projects. It discovers the main 
 /review-paper-code path/to/main.tex
 /review-paper-code path/to/main.tex path/to/code_dir
 /review-paper-code path/to/main.tex path/to/code_dir full
+/review-paper-code --theory path/to/main.tex path/to/code_dir
 ```
 
 **Review depth:**
 
 - `main`: default; focuses on main scripts and core outputs
 - `full`: reviews all detected code files in scope
+
+The `--theory` / `--empirical` flag may appear in any position; if omitted, the mode is auto-detected from the paper.
 
 **Output:**
 
@@ -147,7 +162,7 @@ Writes a report to `code_review_report.md` in the current working directory.
 **Requirements:**
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
-- A LaTeX paper plus Stata, R, or Python analysis code.
+- A LaTeX paper plus analysis code (Stata/R/Python in empirical mode; Python/Julia/MATLAB/Mathematica calibration or symbolic code in theory mode).
 
 ### `review-pap` — Pre-Analysis Plan Review
 

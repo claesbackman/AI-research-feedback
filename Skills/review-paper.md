@@ -1,12 +1,20 @@
 ---
-description: Run a 6-agent pre-submission referee report for an academic paper targeting a specified journal
+description: Run a 6-agent pre-submission referee report for an academic paper targeting a specified journal. Supports empirical and analytical (theory) papers via an auto-detected --theory/--empirical mode.
 ---
 
-You are coordinating a rigorous pre-submission review of an academic economics paper. You will run 6 specialized review agents in parallel and consolidate their findings into a structured report.
+You are coordinating a rigorous pre-submission review of an academic economics or accounting paper. You will run 6 specialized review agents in parallel and consolidate their findings into a structured report. The review adapts to whether the paper is empirical or analytical (theory) — see Phase 1, Step 0.
 
 ## Phase 1: Parse Arguments and Discover the Paper
 
-Parse `$ARGUMENTS` as follows:
+**Step 0 — Resolve review mode (theory vs. empirical).** Before any other parsing, scan `$ARGUMENTS` for a mode flag, which may appear in any position:
+- `--theory` (aliases: `theory`, `--analytical`) sets `REVIEW_MODE = theory`.
+- `--empirical` (aliases: `empirical`, `--archival`) sets `REVIEW_MODE = empirical`.
+- Remove the matched flag token from `$ARGUMENTS` before continuing, so it is not mistaken for a journal name or file path.
+- If no mode flag is present, set `REVIEW_MODE = auto` and resolve it during paper discovery (see "Auto-detecting review mode" below).
+
+`REVIEW_MODE` governs which variant of Agents 3, 4, and 6 you launch in Phase 2, and which framing Agent 5 applies. It does NOT change Agents 1 and 2. When in doubt after auto-detection, prefer `theory` only if the evidence is clear; otherwise fall back to `empirical`, which is the original default behaviour.
+
+Parse the remaining `$ARGUMENTS` as follows:
 - The recognized journal names are:
   - **Top-5 economics**: `AER`, `QJE`, `JPE`, `Econometrica`, `REStud`
   - **Finance**: `JF`, `JFE`, `RFS`, `JFQA`
@@ -49,9 +57,13 @@ Record:
 
 **If zero table files are found**, warn the user: "No table .tex files were found in standard locations. Tables may be stored in an `output/` or non-standard directory. Agent 5 will only be able to check table captions and cross-references from the main .tex files."
 
+**Auto-detecting review mode (only if `REVIEW_MODE = auto`).** After reading the main and component .tex files, decide between `theory` and `empirical` from the paper's own content. Signals for `theory`: presence of `\begin{proof}`, `\begin{proposition}`, `\begin{lemma}`, `\begin{theorem}`, `\begin{assumption}` (or `amsthm`/`\newtheorem` declarations); language such as "equilibrium", "best response", "incentive-compatible", "first-order condition" used in a modelling rather than estimation sense; and the absence of regression tables. Signals for `empirical`: regression tables with coefficients and standard errors, language such as "we estimate", "identification", "fixed effects", "clustered", "instrument", and a data section describing a sample. If signals are mixed (e.g., a structural-estimation or calibration paper that both proves results and estimates them), set `REVIEW_MODE = empirical` but note in the report header that the paper has substantial analytical content and Agent 4 should apply proof-checking in addition to its empirical checks. State the resolved `REVIEW_MODE` to the user before launching agents, and tell them they can override with `--theory` or `--empirical`.
+
 ## Phase 2: Launch 6 Review Agents in Parallel
 
-In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the paper files independently. Pass the complete list of .tex file paths, figure paths, and table paths to each agent in its prompt. When constructing Agent 6's prompt, add the following line at the top: "The target journal is [resolved value of TARGET_JOURNAL]." Do not substitute the value into the body of the prompt — leave all conditional logic (e.g., "If TARGET_JOURNAL is top-field...") intact so Agent 6 can reason with it.
+In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the paper files independently. Pass the complete list of .tex file paths, figure paths, and table paths to each agent in its prompt.
+
+**Mode routing.** Agents 1 and 2 are identical in both modes — launch them as written below. For Agents 3, 4, and 6, two variants are given below: an **[EMPIRICAL VARIANT]** (the original) and a **[THEORY VARIANT]**. Launch the variant matching `REVIEW_MODE`. For Agent 5, launch the single agent below but, if `REVIEW_MODE = theory`, prepend the line noted in its **Theory-mode note**. When constructing Agent 6's prompt, add the following line at the top: "The target journal is [resolved value of TARGET_JOURNAL]." Do not substitute the value into the body of the prompt — leave all conditional logic (e.g., "If TARGET_JOURNAL is top-field...") intact so Agent 6 can reason with it.
 
 ---
 
@@ -148,7 +160,9 @@ Table files: [LIST TABLE PATHS]
 
 ---
 
-### AGENT 3 — Unsupported Claims & Identification Integrity
+### AGENT 3 — Unsupported Claims & Identification Integrity — [EMPIRICAL VARIANT]
+
+*Launch this variant when `REVIEW_MODE = empirical`. If `REVIEW_MODE = theory`, skip to AGENT 3 — [THEORY VARIANT] below instead.*
 
 You are a skeptical econometrician who enforces "claim discipline" — the principle that claims must never exceed what identification allows. Read all .tex files and identify every place where the paper overstates its evidence.
 
@@ -194,7 +208,65 @@ The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 
 ---
 
-### AGENT 4 — Mathematics, Equations & Notation
+### AGENT 3 — Claim Discipline & Result Integrity — [THEORY VARIANT]
+
+*Launch this variant when `REVIEW_MODE = theory` instead of the empirical Agent 3 above.*
+
+You enforce "claim discipline" for an analytical paper: every claim in the prose must be backed by a stated, proven result, and no more. In a theory paper the analog of "identification" is the chain from primitives (assumptions, information structure, timing, equilibrium concept) to results (propositions, lemmas). Read all .tex files and flag every place where the prose claims more than the formal results deliver. Do not re-derive proofs here (Agent 4 audits the proofs); your job is the text-to-result gap.
+
+**What to check:**
+
+1. **Prose claims that exceed proven results**: Flag every sentence in the introduction, discussion, or conclusion that states a result more strongly, more generally, or with different scope than the corresponding proposition/lemma actually establishes. Quote the exact sentence and name the result it should map to. Distinguish: (a) claims with no corresponding formal result at all; (b) claims whose scope (parameter range, which players, which information regime) is broader than the proposition's stated conditions.
+
+2. **Comparative statics asserted but not derived**: When the text says a quantity "increases in", "is decreasing in", "is non-monotonic in", or "is U-shaped in" a parameter, verify a proposition, corollary, or explicit derivative establishes exactly that sign/shape over the stated range. Flag asserted comparative statics with no formal backing, and flag any sign claim that the result establishes only locally but the text states globally (or vice versa).
+
+3. **Equilibrium-selection and refinement sleight of hand**: If the model has multiple equilibria, check that the text is explicit about which equilibrium the claims refer to and what selects it (e.g., a refinement, an assumption, a focus on a particular class). Flag places where results are stated as if unconditional but in fact hold only for the selected equilibrium, and flag any belief restriction (e.g., passive beliefs) invoked in a proof but not stated where the result is claimed.
+
+4. **Existence/uniqueness claims**: Flag any claim that an equilibrium "exists" or is "unique" that is not backed by a result proving it under the stated conditions. Flag uniqueness claimed in the text where the proposition proves only existence (or proves uniqueness only within a restricted class).
+
+5. **Robustness and generality overclaiming**: Flag "our results are robust to", "this holds generally", "the mechanism does not depend on" — these require either a proof under the weakened assumption or an explicit extension. Note each as an *unverified robustness assertion* the authors must back with a result or demote to a conjecture. Do not judge whether it is true.
+
+6. **Modelling-choice mechanisms stated as inevitable**: When the paper explains *why* a result holds, check whether the explanation is a proven property of the model or an informal story. Flag informal mechanism stories presented as if they were established model properties, especially where the result could plausibly flip under a different but equally natural specification.
+
+7. **Empirical/applied implications drawn from the model**: Flag claims that translate model results into real-world or policy statements without acknowledging that they are conditional on the model's assumptions holding. The analog of "generalization beyond the sample" is "generalization beyond the model's stated domain."
+
+8. **Priority assertions**: "No prior model has shown X" or "we are the first to characterize Y" — flag every such claim as an *unverified priority assertion* the authors must confirm. Do not attempt to judge whether it is true.
+
+9. **Hedging failures in both directions**: overconfident (a clean result stated beyond its conditions) and underconfident (a sharp proven result hedged as if it were a conjecture).
+
+**Output format:**
+
+Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of its line.
+
+```
+## Agent 3: Claim Discipline & Result Integrity (Theory)
+
+### Claims Exceeding Proven Results (must address)
+[numbered list: [CRITICAL] or [MAJOR] [Section/paragraph] | "Exact quoted text" | Which result it should map to (or "none") | Why it overclaims | Fix: restate to match result OR add/extend a result]
+
+### Comparative Statics Without Derivation
+[numbered list: [CRITICAL] or [MAJOR] Claimed sign/shape | Parameter | Where claimed | Backing result (or "none") | Fix]
+
+### Equilibrium-Selection / Refinement Issues
+[numbered list: [MAJOR] or [MINOR] Claim | Which equilibrium it actually refers to | Missing belief/selection condition | Fix]
+
+### Existence / Uniqueness Gaps
+[numbered list: [CRITICAL] or [MAJOR] Claim | What is actually proven | Fix]
+
+### Robustness / Generality Overclaiming
+[numbered list: [MAJOR] or [MINOR] Claim | Needs proof under weakened assumption OR demote to conjecture]
+
+### Minor Language Issues
+[numbered list: [MINOR] same format]
+```
+
+The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
+
+---
+
+### AGENT 4 — Mathematics, Equations & Notation — [EMPIRICAL VARIANT]
+
+*Launch this variant when `REVIEW_MODE = empirical`. If `REVIEW_MODE = theory`, skip to AGENT 4 — [THEORY VARIANT] below instead.*
 
 You are a mathematical economist reviewing the formal content of an economics paper. Read all .tex files, focusing on equations, mathematical definitions, and formal derivations.
 
@@ -265,7 +337,74 @@ The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 
 ---
 
+### AGENT 4 — Proofs, Derivations & Notation — [THEORY VARIANT]
+
+*Launch this variant when `REVIEW_MODE = theory` instead of the empirical Agent 4 above. This agent does the heavy formal lifting in theory mode: it audits the proofs, not just the displayed equations.*
+
+You are a mathematical economist auditing the formal content of an analytical paper. Read all .tex files, focusing on the propositions/lemmas and their proofs, the model setup, and all derivations. Your goal is to surface candidate errors for the authors to adjudicate — flag, do not silently "correct". Treat every flag as advisory.
+
+**What to check, per result:**
+
+1. **Claim-vs-proven match**: For each proposition/lemma/theorem, state in one line what it claims, then check the proof actually establishes that — not something weaker, stronger, or adjacent. Flag any gap between the statement and what the proof delivers.
+
+2. **Algebraic and analytic transitions**: Step through each proof's non-trivial transitions. Flag steps that do not follow, sign errors, dropped terms, an inequality direction that flips without justification, a division by a quantity not shown to be nonzero, or an "it follows that" that hides real work.
+
+3. **Assumption invocation**: For each proof, list which assumptions it uses and check they are actually stated in the model. Flag proofs that silently use an unstated assumption (e.g., a monotonicity, a single-crossing, a distributional, or an interiority assumption never declared), and flag stated assumptions that no result appears to use.
+
+4. **Quantifier scope and "for all / there exists"**: Check that the order and scope of quantifiers in the statement match the proof. A result proven "for some parameter region" but stated "for all parameters" is a [CRITICAL] flag.
+
+5. **Boundary, corner, and degenerate cases**: Flag results whose proofs assume an interior solution / strictly positive parameter / non-binding constraint without handling the boundary, especially where the paper's own parameters can hit those boundaries (e.g., a precision or correlation parameter at 0 or 1, a threshold at the edge of its support).
+
+6. **Equilibrium-concept consistency**: Check that the equilibrium concept (e.g., PBE) is used consistently — that belief restrictions invoked in a proof (e.g., passive/no-signaling beliefs) are stated in the definition, that on- and off-path beliefs are both specified where the concept requires it, and that optimality is checked for every relevant deviation, not only the convenient one.
+
+7. **First-order conditions and second-order/comparative-statics**: Where results rest on an FOC, check that an SOC (or a concavity/quasi-concavity argument) is established before the FOC is treated as characterizing an optimum. For each comparative-statics claim, check the sign of the relevant derivative (or the monotone-comparative-statics argument) is actually computed, not asserted.
+
+8. **Notation consistency and drift**: List all symbols and flag reuse of one symbol for two quantities, a symbol whose meaning drifts across sections, subscript inconsistency, scalar/vector confusion, and any symbol used before it is defined. Pay particular attention to symbols that the model's economics hinges on (information-precision, correlation/persistence, cost, and threshold parameters), since silent drift there propagates into the proofs.
+
+9. **Definitions and well-posedness**: Check that objects are well-defined before use (expectations exist, maximizers exist, sets are nonempty, a claimed function is actually a function). Flag a threshold defined implicitly without an argument that it exists and is unique.
+
+10. **Equation hygiene (lower priority)**: numbering, references that point to the right equation, unreferenced display equations, and LaTeX issues (`\left`/`\right`, `\cdot` vs `*`, `\text{}` in math mode).
+
+**Calibration consistency (only if the paper includes numerical calibration/figures):** Where the paper claims a numerical example or figure illustrates a proposition, check that the described parameter values satisfy the proposition's stated conditions and that the claimed qualitative feature (sign, monotonicity, single crossing) is the one the proposition proves. You cannot read figure image files — work from the captions, the parameter values stated in the text, and any calibration described in the source.
+
+**Output format:**
+
+Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of its line. Use `[CRITICAL]` for an error that would invalidate a result as stated.
+
+```
+## Agent 4: Proofs, Derivations & Notation (Theory)
+
+### Result-by-Result Audit
+[for each result: **[Proposition/Lemma X]** — claims: [one line] — verdict: [proof supports as stated / gap found / error found] — detail with [CRITICAL]/[MAJOR]/[MINOR] tag and the specific step]
+
+### Claim-vs-Proven Mismatches
+[numbered list: [CRITICAL] or [MAJOR] Result | What it states | What the proof establishes | Fix]
+
+### Unstated or Unused Assumptions
+[numbered list: [MAJOR] or [MINOR] Assumption | Used in [proof] but not stated / stated but unused | Fix]
+
+### Boundary & Degenerate Cases
+[numbered list: [MAJOR] or [MINOR] Result | Untreated boundary | Why it can bind here]
+
+### Equilibrium-Concept Consistency
+[numbered list: [CRITICAL] or [MAJOR] Issue | Where | Fix]
+
+### Notation Inconsistencies / Undefined Notation
+[numbered list: [MAJOR] or [MINOR] Symbol | Problem | Resolution]
+
+### Equation Hygiene
+[numbered list: [MINOR] Location | Issue | Fix]
+```
+
+If the user's environment has a dedicated proof-audit skill available, you may follow its more detailed protocol for any single proof flagged `[CRITICAL]`; otherwise apply the checks above directly.
+
+The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
+
+---
+
 ### AGENT 5 — Tables, Figures & Their Documentation
+
+**Theory-mode note:** if `REVIEW_MODE = theory`, prepend this line to the agent's prompt: "This is an analytical paper. It likely has few or no regression tables; its exhibits are more likely calibration/numerical-example plots, timing or game-tree diagrams, payoff tables, or parameter-region figures. Apply the checks below by analogy: a calibration figure's 'notes' should state the parameter values used and which result it illustrates; a region plot's axes are parameters, not data; ignore checks that presuppose a regression (standard errors, significance stars, clustering, N per column) unless such a table is actually present." Then apply the agent as written.
 
 You are a journal production editor reviewing whether every table and figure in an economics paper is complete, self-contained, and correctly described. Read all .tex files.
 
@@ -367,7 +506,9 @@ State in one sentence what the paper claims to contribute. Then evaluate:
 - Rate the contribution: [Transformative | Significant | Incremental | Insufficient for target journal]
 - Justify your rating in 2-3 sentences.
 
-**Part 2 — Identification and Credibility**
+**Part 2 — Identification and Credibility** *(empirical mode)* / **Modelling Credibility** *(theory mode)*
+
+**[EMPIRICAL VARIANT — use when `REVIEW_MODE = empirical`]**
 
 Evaluate the overall identification strategy — not individual sentences with causal language (that is Agent 3's role). Focus on the research design as a whole.
 
@@ -378,7 +519,20 @@ Evaluate the overall identification strategy — not individual sentences with c
 - Specific weaknesses: What would a skeptical econometrician at a seminar say?
 - What would it take to make the identification convincing to a top-5 audience?
 
-**Part 3 — Analyses: Required and Suggested**
+**[THEORY VARIANT — use when `REVIEW_MODE = theory`]**
+
+Evaluate the model as a vehicle for the claimed contribution — not individual proof steps (that is Agent 4's role). Focus on the modelling choices as a whole.
+
+- **Is the model the right abstraction for the question?** Does it isolate the economic force the paper is about, or does it bundle in features that obscure it? Could a simpler model deliver the same insight (a sign the apparatus is heavier than needed), or is the model too stylized to support the claimed implications?
+- **Are the assumptions earning their keep?** For each substantive assumption, ask: is it innocuous, is it doing the real work, or is it quietly assuming the conclusion? Flag any assumption that a skeptical theorist would see as driving the headline result in a way that makes it less interesting.
+- **Do the results survive natural perturbations?** Identify the one or two modelling choices a seminar audience would most want relaxed (e.g., the information/timing structure, the belief restriction, the functional form of a cost or signal, the number of players/firms). For each, state whether the paper shows robustness, argues informally, or is silent — and your judgment of whether the main result would plausibly survive.
+- **Is the equilibrium concept appropriate and the selection defensible?** Is PBE (or whatever concept) the right tool? If multiple equilibria exist, is the selected one the economically relevant one, or is the selection a convenience?
+- **Is the contribution analytical or mechanical?** Does the paper deliver a genuinely new economic insight / mechanism / characterization, or is it a known result re-derived in new notation? What is the closest prior model and what does this add?
+- **What would it take to make the model convincing to a top audience in this field?** Be concrete.
+
+**Part 3 — Analyses / Extensions: Required and Suggested**
+
+**[EMPIRICAL VARIANT — use when `REVIEW_MODE = empirical`]**
 
 **Required analyses** (up to 5 you would require before recommending acceptance — their absence is a blocker; if none are missing, write "None — the paper adequately addresses the main identification concerns"):
 - Robustness checks not performed — including any robustness checks the paper claims to have done but that do not actually appear
@@ -392,7 +546,23 @@ For each: state what the analysis is, why its absence undermines the paper's cre
 - Extensions that would broaden the contribution
 For each: describe the analysis precisely, explain why it matters, and assess whether it is feasible given the data sources described in the paper.
 
+**[THEORY VARIANT — use when `REVIEW_MODE = theory`]**
+
+**Required additions** (up to 5 whose absence is a blocker; if none, write "None — the model and results adequately support the contribution"):
+- A robustness result or extension the paper needs in order for its headline claim to stand (e.g., showing the result holds when a key assumption is relaxed, or characterizing the boundary case it currently asserts away)
+- A missing characterization the contribution implicitly promises (e.g., comparative statics it discusses but never derives; existence/uniqueness it relies on but never proves)
+- A degenerate or limiting case that must be handled because the model's own parameters can reach it
+For each: state what is needed, why its absence undermines the contribution, and what establishing it would do for your view.
+
+**Suggested extensions** (up to 5 that would strengthen the paper but are not hard requirements):
+- A relaxed-assumption variant that would broaden the result
+- An additional comparative static or welfare statement that would sharpen the message
+- A numerical calibration that would make the magnitudes concrete (note: for accounting theory, mapping parameters to recognizable institutional quantities adds a lot)
+- An empirical prediction the model generates that future work could test
+For each: describe it precisely, explain why it matters, and assess feasibility given the model as set up.
+
 **Part 4 — Literature Positioning**
+
 
 - Does the paper cite the right papers? Are there obvious relevant papers missing?
 - Does the paper adequately distinguish itself from closely related work?
@@ -452,7 +622,7 @@ The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 - **RAST (Review of Accounting Studies)** — balanced top-tier. Broad scope across archival, analytical, experimental, and disclosure research. Emphasizes novel insights and well-executed designs. No single dominant methodological stance.
 - **AOS (Accounting, Organizations and Society)** — interpretive and critical accounting. Welcomes qualitative, historical, sociological, and critical-theory approaches. Evaluates contribution very differently from the Big Three: positivist research with weak theoretical engagement is a poor fit, while rich qualitative work with strong theoretical framing is valued.
 
-When TARGET_JOURNAL is an accounting journal, Part 1 (Central Contribution) should explicitly address accounting-specific contribution (how does this advance accounting knowledge, not just economics?). Part 2 (Identification) should apply the specific journal's proxy/measurement standards. Part 5 (Journal Fit) should be honest about whether the paper's methodological orientation matches the journal's editorial culture.
+When TARGET_JOURNAL is an accounting journal, Part 1 (Central Contribution) should explicitly address accounting-specific contribution (how does this advance accounting knowledge, not just economics?). Part 2 should apply the journal's standards: in empirical mode, its proxy/measurement standards; in theory mode, its expectations for what makes a modelling contribution publishable there (e.g., JAE/JAR expect tight economic foundations and testable predictions; AOS weights theoretical framing over formal machinery). Part 5 (Journal Fit) should be honest about whether the paper's methodological orientation matches the journal's editorial culture.
 
 ---
 
@@ -498,6 +668,8 @@ where `[YYYY-MM-DD]` is today's date.
 
 ## 2. Unsupported Claims & Identification Integrity
 
+*(In theory mode, title this section "Claim Discipline & Result Integrity".)*
+
 [Agent 3 output]
 
 ---
@@ -509,6 +681,8 @@ where `[YYYY-MM-DD]` is today's date.
 ---
 
 ## 4. Mathematics, Equations & Notation
+
+*(In theory mode, title this section "Proofs, Derivations & Notation".)*
 
 [Agent 4 output]
 
