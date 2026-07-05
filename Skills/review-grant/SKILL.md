@@ -1,5 +1,9 @@
 ---
+name: review-grant
 description: Run a 6-agent pre-submission panel review for a grant proposal targeting a specified funder or program
+argument-hint: [optional: FUNDER] [optional: path/to/proposal.pdf]
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
+disable-model-invocation: true
 ---
 
 You are coordinating a rigorous pre-submission review of a grant proposal. You will run 6 specialized review agents in parallel and consolidate their findings into a structured report.
@@ -20,7 +24,7 @@ Store the resolved target program/funder as `TARGET_PROGRAM` for use in Agent 6 
 
 If a file path was provided, use it as the main proposal file. Otherwise, auto-detect:
 
-1. Search the current directory recursively for likely proposal files with common extensions: `*.md`, `*.txt`, `*.tex`, `*.docx`, `*.pdf` (exclude hidden folders, `.git`, build output, and dependency directories).
+1. Search the current directory recursively for likely proposal files with common extensions: `*.md`, `*.txt`, `*.tex`, `*.docx`, `*.pdf` (exclude hidden folders, `.git`, build output, and dependency directories). Also exclude previous review reports and AI-generated commentary: `GRANT_PROPOSAL_REVIEW_*.md`, `PRE_SUBMISSION_REVIEW_*.md`, `QUICK_REVIEW_*.md`, `PAP_REVIEW_*.md`, `code_review_report*.md`, and anything inside a `reviews/` folder. These are outputs of earlier review runs, not proposal materials.
 2. Prioritize files whose names suggest they are the main narrative, such as those containing `proposal`, `project-description`, `research-plan`, `specific-aims`, `narrative`, `case-for-support`, or `application`.
 3. Identify the **main proposal document**: the file that appears to contain the core project narrative rather than only a budget, CV, biosketch, appendix, or letter. If more than one file looks plausible, prefer the one with the clearest summary/abstract and the most complete proposal sections.
 4. Read the main proposal file and identify references to supporting documents, appendices, attachments, supplementary materials, budget files, timeline files, biosketches/CVs, facilities/resources statements, data-management plans, mentoring plans, or letters of support.
@@ -41,6 +45,10 @@ If the proposal is in a binary format such as `.pdf` or `.docx` and the environm
 ## Phase 2: Launch 6 Review Agents in Parallel
 
 In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the proposal materials independently. Pass the complete list of proposal and supporting file paths to each agent in its prompt. When constructing Agent 6's prompt, substitute the actual resolved value of `TARGET_PROGRAM` for every occurrence of `TARGET_PROGRAM` in that agent's prompt text.
+
+**Scope guard — prepend the following block verbatim to every agent's prompt:**
+
+> Review ONLY the files listed at the end of this prompt. Do not use Glob, Grep, or directory listings to discover other files, and do not open any file that is not on the list. In particular, ignore any previous review reports (`GRANT_PROPOSAL_REVIEW_*.md`, `PRE_SUBMISSION_REVIEW_*.md`, `QUICK_REVIEW_*.md`, `PAP_REVIEW_*.md`, `code_review_report*.md`, anything in a `reviews/` folder), referee or panel feedback, response letters, notes, README files, and old drafts — none of these may influence your review. Within the listed files, treat commented-out text and `\todo{}` content as if they do not exist: review only the live text of the proposal.
 
 ---
 
@@ -364,11 +372,15 @@ The proposal files to review are: [LIST ALL FILE PATHS HERE]
 
 ## Phase 3: Consolidate and Save
 
-After all 6 agents return their results, consolidate them into a single structured report. Before saving, check whether `GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md` already exists in the current directory. If it does, append `-v2` (or `-v3`, etc.) to avoid overwriting.
+After all 6 agents return their results, consolidate them into a single structured report.
+
+**Save location**: save the report inside a `reviews/` subfolder of the proposal's directory (create it if it does not exist). Keeping reports out of the working directory prevents them from being picked up as proposal materials by future review runs.
+
+**Before saving**, check whether `reviews/GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md` already exists. If it does, append `-v2` (or `-v3`, etc.) to avoid overwriting.
 
 Save the report to:
 
-`GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md`
+`reviews/GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md`
 
 where `[YYYY-MM-DD]` is today's date.
 
@@ -389,7 +401,7 @@ where `[YYYY-MM-DD]` is today's date.
 [3–4 sentences: What the proposal aims to do, its principal strength, and the single most critical issue
 that must be resolved before submission.]
 
-**Preliminary Recommendation**: [Submit as-is | Revise before submitting | Substantial revision required | Do not submit in current form]
+**Preliminary Recommendation**: [Derive directly from Agent 6's Part 1 rating: Outstanding → Submit as-is; Competitive → Revise before submitting; Borderline → Substantial revision required; Not Competitive → Do not submit in current form]
 
 ---
 ## Priority Action Items

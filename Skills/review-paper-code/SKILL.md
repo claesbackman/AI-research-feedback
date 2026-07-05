@@ -1,9 +1,9 @@
 ---
 name: review-paper-code
 description: Review research code for reproducibility and quality, extract the paper's main empirical claims, compare paper to code, and write a constructive markdown report. Designed for social science / economics projects with LaTeX papers and Stata, R, or Python code.
-user-invocable: true
 argument-hint: [optional: path/to/main.tex] [optional: path/to/code_dir] [optional: main|full]
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
+disable-model-invocation: true
 ---
 
 # Review Paper Code
@@ -37,7 +37,7 @@ Use Glob to search for `**/*.tex`, excluding obvious build folders such as `_min
 
 Identify the main paper file as the best candidate containing `\documentclass` or `\begin{document}`.
 
-If multiple candidates exist, prefer:
+If multiple candidates exist, first discard files whose document class is `beamer` (slides) and files whose name or folder suggests an old draft or a response letter (`response*`, `letter*`, `slides*`, `old*`, `archive/`, etc.). Then prefer:
 1. A path explicitly provided in `$ARGUMENTS`
 2. A file in `Writing/`, `writing/`, `Paper/`, `paper/`, `Draft/`, or the repo root
 3. The file that appears to include the most component files via `\input{}` / `\include{}`
@@ -155,6 +155,8 @@ Prompt:
 > - Reviewed code files: [insert `CODE_FILES_REVIEWED`]
 > - README / documentation files: [insert discovered supporting files or "none found"]
 >
+> Review ONLY the files in scope. Do not use Glob or Grep to discover other files, and ignore any previous review reports (`code_review_report*.md`, `PRE_SUBMISSION_REVIEW_*.md`, `QUICK_REVIEW_*.md`, anything in a `reviews/` folder) — they must not influence your review.
+>
 > Review the files and produce a compact report focused on the most decision-relevant findings.
 >
 > Check:
@@ -219,7 +221,7 @@ Prompt:
 > - Reviewed code files: [insert `CODE_FILES_REVIEWED`]
 > - Code directory: [insert `CODE_DIR`]
 >
-> Read the code files as needed and identify whether the paper's core empirical design appears in the code.
+> Read the code files as needed and identify whether the paper's core empirical design appears in the code. Confine your reading to the listed code files and files inside the code directory that they reference. Ignore any previous review reports (`code_review_report*.md`, `PRE_SUBMISSION_REVIEW_*.md`, `QUICK_REVIEW_*.md`, anything in a `reviews/` folder) and old paper drafts — they must not influence the mapping.
 >
 > Focus on the main paper elements only:
 > 1. Main tables and figures
@@ -276,8 +278,10 @@ Create:
 
 ## Phase 5: Write the Report
 
-Write the final report to the current working directory as:
-- `code_review_report.md`
+Write the final report to a `reviews/` subfolder of the current working directory (create it if it does not exist) as:
+- `reviews/code_review_report.md`
+
+Keeping the report in `reviews/` prevents it from being picked up as project material by future review runs.
 
 Use this structure:
 
@@ -346,7 +350,7 @@ Keep the final report readable. Prefer concise, high-signal summaries over exhau
 
 After writing the report, tell the user:
 - that the code review is complete
-- that the report was written to `code_review_report.md`
+- that the report was written to `reviews/code_review_report.md`
 - the `Overall Assessment`
 - 3-5 bullets from `What's Working Well`
 - the top 3 suggested next steps

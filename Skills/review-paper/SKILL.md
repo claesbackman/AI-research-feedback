@@ -1,8 +1,12 @@
 ---
-description: Run a 6-agent pre-submission referee report for an academic paper targeting a specified journal
+name: review-paper
+description: Run an 8-agent pre-submission referee report for an academic paper targeting a specified journal
+argument-hint: [optional: JOURNAL] [optional: path/to/main.tex]
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
+disable-model-invocation: true
 ---
 
-You are coordinating a rigorous pre-submission review of an academic economics paper. You will run 6 specialized review agents in parallel and consolidate their findings into a structured report.
+You are coordinating a rigorous pre-submission review of an academic economics paper. You will run 8 specialized review agents in parallel and consolidate their findings into a structured report.
 
 ## Phase 1: Parse Arguments and Discover the Paper
 
@@ -21,9 +25,12 @@ Store the resolved target journal as `TARGET_JOURNAL` for use in Agent 6 and the
 If a file path was provided, use it as the main LaTeX file. Otherwise, auto-detect:
 
 1. Use Glob with pattern `**/*.tex` to list all .tex files in the current directory (exclude any `_minted-*` or build output folders).
-2. Identify the **main document**: the .tex file that contains `\documentclass` or `\begin{document}`. Read each candidate briefly if needed.
-3. Read the main file and extract all `\input{}`, `\include{}`, and `\subfile{}` references to build the full file list.
-4. Read all component .tex files to understand the complete paper structure (introduction, data, methodology, results, appendix, etc.).
+2. Identify the **main document** among the .tex files that contain `\documentclass` or `\begin{document}`. Read each candidate briefly if needed. Multiple candidates are common — old drafts, beamer slides, and response letters also contain `\documentclass` — so apply these rules in order:
+   - Discard files whose document class is `beamer` (slides) and files whose name or folder suggests they are not the current paper: names like `response*`, `letter*`, `slides*`, `presentation*`, `old*`, or files inside folders named `old/`, `archive/`, `previous/`, `submitted/`, or similar.
+   - Among the remaining candidates, choose the one with the largest include-graph (the most `\input{}`/`\include{}`/`\subfile{}` references, counted recursively).
+   - If it is still ambiguous, ask the user which file is the main document before proceeding.
+3. Read the main file and extract all `\input{}`, `\include{}`, and `\subfile{}` references (recursively) to build the paper's **include-graph**.
+4. Read all component .tex files to understand the complete paper structure (introduction, data, methodology, results, appendix, etc.). **The .tex file list passed to the review agents in Phase 2 is exactly the main file plus its include-graph.** Do not pass .tex files that the glob in step 1 found but the paper does not include (old drafts, response letters, slides, notes).
 5. Use Glob to list figure files: patterns covering common directories and formats:
    - `**/Figures/**/*.pdf`, `**/figures/**/*.pdf`, `**/Figure/**/*.pdf`, `**/figure/**/*.pdf`
    - `**/Figures/**/*.png`, `**/figures/**/*.png`, `**/Figure/**/*.png`, `**/figure/**/*.png`
@@ -37,6 +44,7 @@ If a file path was provided, use it as the main LaTeX file. Otherwise, auto-dete
    - `**/Tables/**/*.tex`, `**/tables/**/*.tex`, `**/Table/**/*.tex`, `**/table/**/*.tex`
    - Root-level: `*table*.tex`, `*Table*.tex`
    - Exclude: `**/_minted-*/**`, `**/build/**`, `**/output/**`, `**/.git/**`
+7. **Filter to files the paper actually uses**: keep only figure files whose path stem appears in an `\includegraphics{...}` call somewhere in the include-graph (LaTeX often omits the file extension — match on the stem), and only table files that are `\input{}`/`\include{}`d from the include-graph. Record any excluded, unreferenced files separately — do not pass them to the agents; they are often stale outputs from earlier drafts.
 
 Record:
 - Full path of each .tex file and its role in the paper
@@ -48,9 +56,13 @@ Record:
 
 **If zero table files are found**, warn the user: "No table .tex files were found in standard locations. Tables may be stored in an `output/` or non-standard directory. Agent 5 will only be able to check table captions and cross-references from the main .tex files."
 
-## Phase 2: Launch 6 Review Agents in Parallel
+## Phase 2: Launch 8 Review Agents in Parallel
 
-In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the paper files independently. Pass the complete list of .tex file paths, figure paths, and table paths to each agent in its prompt. When constructing Agent 6's prompt, add the following line at the top: "The target journal is [resolved value of TARGET_JOURNAL]." Do not substitute the value into the body of the prompt — leave all conditional logic (e.g., "If TARGET_JOURNAL is top-field...") intact so Agent 6 can reason with it.
+In a **single message**, launch all 8 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the paper files independently. Pass the complete list of .tex file paths, figure paths, and table paths to each agent in its prompt. When constructing the prompts for Agents 6, 7, and 8, add the following line at the top: "The target journal is [resolved value of TARGET_JOURNAL]." Do not substitute the value into the body of those prompts — leave all conditional logic (e.g., "If TARGET_JOURNAL is top-field...") intact so the agents can reason with it.
+
+**Scope guard — prepend the following block verbatim to every agent's prompt:**
+
+> Review ONLY the files listed at the end of this prompt. Do not use Glob, Grep, or directory listings to discover other files, and do not open any file that is not on the list. In particular, ignore any previous review reports (`PRE_SUBMISSION_REVIEW_*.md`, `QUICK_REVIEW_*.md`, anything in a `reviews/` folder), referee reports, response letters, notes, README files, and old drafts — none of these may influence your review. Within the listed .tex files, treat `%`-commented-out lines and `\todo{}` content as if they do not exist: review only the live text of the paper.
 
 ---
 
@@ -345,7 +357,7 @@ Table files: [LIST TABLE PATHS]
 
 ---
 
-### AGENT 6 — Contribution Evaluation (Adversarial Top-5 Referee)
+### AGENT 6 — Referee Assessment (Identification, Analyses, Positioning & Fit)
 
 You are a demanding associate editor. Adopt the persona and editorial norms appropriate to `TARGET_JOURNAL`:
 - If it is a specific journal (e.g., AER, QJE, JPE, Econometrica, REStud, JF, JFE, RFS, JFQA, AEJMacro, JME, RED), apply that journal's scope, style preferences, and standards for what constitutes a publishable contribution — including its typical methodological bar, preferred framing, and audience expectations.
@@ -353,21 +365,13 @@ You are a demanding associate editor. Adopt the persona and editorial norms appr
 
 In all cases: you have read thousands of papers and have extremely high standards. You are deciding whether this paper deserves to be sent to referees, or whether it should be desk rejected. You are not hostile, but you are exacting, specific, and rigorous. You will read the complete paper and produce a structured evaluation.
 
+The paper's central contribution is evaluated separately by two dedicated agents — do not produce a contribution rating. Focus on the research design, the analyses, the literature coverage, and journal fit.
+
 Read all .tex files completely and thoroughly.
 
-**Your evaluation has 7 parts:**
+**Your evaluation has 5 parts:**
 
-**Part 1 — The Central Contribution**
-
-State in one sentence what the paper claims to contribute. Then evaluate:
-- Is this finding genuinely new, or is it a replication of known results in a new setting?
-- What is the closest prior paper? What does this paper add beyond that paper?
-- Does the paper answer a question that reasonable economists disagree about, or that the profession needs answered?
-- Does this finding change how economists think about the paper's central topic?
-- Rate the contribution: [Transformative | Significant | Incremental | Insufficient for target journal]
-- Justify your rating in 2-3 sentences.
-
-**Part 2 — Identification and Credibility**
+**Part 1 — Identification and Credibility**
 
 Evaluate the overall identification strategy — not individual sentences with causal language (that is Agent 3's role). Focus on the research design as a whole.
 
@@ -378,7 +382,7 @@ Evaluate the overall identification strategy — not individual sentences with c
 - Specific weaknesses: What would a skeptical econometrician at a seminar say?
 - What would it take to make the identification convincing to a top-5 audience?
 
-**Part 3 — Analyses: Required and Suggested**
+**Part 2 — Analyses: Required and Suggested**
 
 **Required analyses** (up to 5 you would require before recommending acceptance — their absence is a blocker; if none are missing, write "None — the paper adequately addresses the main identification concerns"):
 - Robustness checks not performed — including any robustness checks the paper claims to have done but that do not actually appear
@@ -392,22 +396,24 @@ For each: state what the analysis is, why its absence undermines the paper's cre
 - Extensions that would broaden the contribution
 For each: describe the analysis precisely, explain why it matters, and assess whether it is feasible given the data sources described in the paper.
 
-**Part 4 — Literature Positioning**
+**Part 3 — Literature Positioning**
+
+(The contribution itself is rated by Agents 7 and 8 — focus here on citation coverage, differentiation, and framing.)
 
 - Does the paper cite the right papers? Are there obvious relevant papers missing?
 - Does the paper adequately distinguish itself from closely related work?
 - Is the paper over-citing minor papers and under-citing major ones?
 - Is the framing in the introduction the most compelling way to position this paper, or is there a better framing?
 
-**Part 5 — Journal Fit and Recommendation**
+**Part 4 — Journal Fit and Recommendation**
 
 - If `TARGET_JOURNAL` is a specific journal: Is this paper a strong fit for `TARGET_JOURNAL` given its scope, methods, and level of contribution? Identify any fit risks (wrong audience, wrong methods bar, topic outside scope).
 - If `TARGET_JOURNAL` is `top-field`: Which specific journals are the best realistic targets for this paper, and why?
-- What is your preliminary recommendation: [Send to referees | Revise before sending to referees | Desk reject]
+- What is your preliminary recommendation: [Send to referees | Revise before sending to referees | Desk reject]? Base it on identification, execution, and positioning — the contribution rating is produced separately and will be reported alongside your recommendation.
 - What would it take, concretely, to reach the standard required by the target journal?
 - What is the best realistic alternative outlet if the paper is not accepted at the target journal?
 
-**Part 6 — Pointed Questions to the Authors**
+**Part 5 — Pointed Questions to the Authors**
 
 Write 4–7 specific, pointed questions that you would send to the authors as a referee. These should be the hard questions — the ones that get at the paper's weakest points. Frame them exactly as a referee would in a report.
 
@@ -416,29 +422,123 @@ Write 4–7 specific, pointed questions that you would send to the authors as a 
 Tag every Required analysis with `[CRITICAL]` and every Suggested analysis with `[MAJOR]`.
 
 ```
-## Agent 6: Contribution Evaluation
+## Agent 6: Referee Assessment
 
-### Part 1 — Central Contribution
-[assessment + rating]
-
-### Part 2 — Identification and Credibility
+### Part 1 — Identification and Credibility
 [assessment]
 
-### Part 3 — Analyses: Required and Suggested
+### Part 2 — Analyses: Required and Suggested
 **Required:**
 [numbered list: [CRITICAL] analysis | why absence undermines credibility | what a positive result would do]
 
 **Suggested:**
 [numbered list: [MAJOR] analysis | why it matters | feasibility]
 
-### Part 4 — Literature Positioning
+### Part 3 — Literature Positioning
 [assessment]
 
-### Part 5 — Journal Fit and Recommendation
+### Part 4 — Journal Fit and Recommendation
 [recommendation + path to improvement]
 
-### Part 6 — Questions to the Authors
+### Part 5 — Questions to the Authors
 [numbered list of 4–7 questions, formatted as a referee would write them]
+```
+
+The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
+
+---
+
+### AGENT 7 — Contribution Advocate (Steelman)
+
+You are the paper's most sympathetic senior reader — an advocate preparing the strongest honest case that this paper's contribution clears the bar at `TARGET_JOURNAL` (if `TARGET_JOURNAL` is `top-field`, the bar of a leading field journal). You are not a cheerleader: every claim you make must be grounded in the paper itself.
+
+**Grounding rules — these apply to every part:**
+- Base all literature comparisons on the paper's own bibliography and literature review. Do not rely on your general knowledge of the literature to assert what does or does not exist.
+- If you draw on general knowledge beyond the paper's bibliography, label the claim `[UNVERIFIED — based on general knowledge; authors must confirm]`, and never invent authors, titles, years, or findings.
+
+Read all .tex files completely and thoroughly.
+
+**Your evaluation has 4 parts:**
+
+**Part 1 — The Claimed Contribution**
+- State in one sentence what the paper claims to contribute, in the authors' own framing.
+- Classify the contribution type(s) — more than one may apply: new question, new data, new method, new setting, or new answer to an old question.
+- State the one-line takeaway a busy editor would remember after reading the abstract and introduction.
+
+**Part 2 — Delta Over the Closest Papers**
+- From the paper's own bibliography and literature review, identify the 2–3 closest prior papers.
+- For each: one sentence on what that paper shows (as characterized in this paper), and one sentence on what this paper adds beyond it — grounded in what the results actually deliver, not just what the introduction promises.
+
+**Part 3 — The Strongest Case**
+- Why would an editor at the target journal find this exciting? What question does it settle, what debate does it inform, or what does it let economists do that they could not do before?
+- Which single result carries the contribution, and how strong is that result on its own terms?
+
+**Part 4 — Provisional Rating**
+- Rate the contribution: [Transformative | Significant | Incremental | Insufficient for target journal]. Justify in 2–3 sentences. Give the strongest defensible rating, not an inflated one.
+
+**Output format:**
+
+```
+## Agent 7: Contribution Advocate
+
+### Part 1 — The Claimed Contribution
+[statement + contribution type(s) + one-line takeaway]
+
+### Part 2 — Delta Over the Closest Papers
+[numbered list: Paper | What it shows (per this paper) | What this paper adds]
+
+### Part 3 — The Strongest Case
+[assessment]
+
+### Part 4 — Provisional Rating
+[rating + 2–3 sentence justification]
+```
+
+The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
+
+---
+
+### AGENT 8 — Contribution Skeptic (Attack)
+
+You are a skeptical co-editor at `TARGET_JOURNAL` (if `TARGET_JOURNAL` is `top-field`, a leading field journal) preparing the case for desk rejection on contribution grounds. Your attack must be specific to this paper — no generic criticisms that could apply to any manuscript.
+
+**Grounding rules — these apply to every part:**
+- Base all literature comparisons on the paper's own bibliography and literature review. Do not rely on your general knowledge of the literature to assert what does or does not exist.
+- If you draw on general knowledge beyond the paper's bibliography, label the claim `[UNVERIFIED — based on general knowledge; authors must confirm]`, and never invent authors, titles, years, or findings.
+
+Read all .tex files completely and thoroughly.
+
+**Your evaluation has 4 parts:**
+
+**Part 1 — The Contribution Under Attack**
+- Restate the claimed contribution in one sentence. Then make the strongest case against it: Is the delta over the closest cited papers marginal? Is the question already settled by the papers the authors themselves cite? Is this a known result in a new setting presented as if it were novel?
+
+**Part 2 — Framing vs. Delivery**
+- Does the introduction promise more than the results deliver? Quote the specific promises that the results do not support.
+- Would the central finding change how economists think about the topic, or does it confirm existing priors?
+
+**Part 3 — What It Would Take**
+- State concretely what the paper would need to show, add, or reframe for the contribution to clear the target journal's bar. Be specific: which analysis, which comparison, which reframing of the question.
+
+**Part 4 — Provisional Rating**
+- Rate the contribution: [Transformative | Significant | Incremental | Insufficient for target journal]. Justify in 2–3 sentences. Give the most skeptical defensible rating, not a reflexively hostile one.
+
+**Output format:**
+
+```
+## Agent 8: Contribution Skeptic
+
+### Part 1 — The Contribution Under Attack
+[assessment]
+
+### Part 2 — Framing vs. Delivery
+[assessment, with quoted promises where applicable]
+
+### Part 3 — What It Would Take
+[numbered list of concrete changes]
+
+### Part 4 — Provisional Rating
+[rating + 2–3 sentence justification]
 ```
 
 The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
@@ -447,15 +547,17 @@ The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 
 ## Phase 3: Consolidate and Save
 
-**Before consolidating**, check for agent failures: if any agent returned no output or clearly malformed output, insert a placeholder section in the report (e.g., "## 4. Mathematics, Equations & Notation — Agent did not return output") and include it in the final user-facing summary.
+**Before consolidating**, check for agent failures: if any agent returned no output or clearly malformed output, insert a placeholder section in the report (e.g., "## 5. Mathematics, Equations & Notation — Agent did not return output") and include it in the final user-facing summary.
 
 After all available agent results are collected, consolidate them into a single structured report.
 
-**Before saving**, check whether `PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md` already exists in the current directory. If it does, append `-v2` (or `-v3`, etc.) to avoid overwriting.
+**Save location**: save the report inside a `reviews/` subfolder of the paper's directory (create it if it does not exist). Keeping reports out of the paper's root directory prevents them from being picked up by future runs of this skill.
+
+**Before saving**, check whether `reviews/PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md` already exists. If it does, append `-v2` (or `-v3`, etc.) to avoid overwriting.
 
 Save the report to:
 
-`PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md`
+`reviews/PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md`
 
 where `[YYYY-MM-DD]` is today's date.
 
@@ -473,43 +575,58 @@ where `[YYYY-MM-DD]` is today's date.
 
 ## Overall Assessment
 
-[3–4 sentences synthesized as follows: (1) what the paper does — from Agent 6 Part 1; (2) its principal strength — from Agent 6 Part 1 contribution rating; (3) the single most critical issue — the top CRITICAL item from the Priority Action Items list below. Do not introduce judgments not already present in the agent outputs.]
+[3–4 sentences synthesized as follows: (1) what the paper does — from Agent 7 Part 1; (2) where the contribution stands — from the Contribution Synthesis in Section 1 below; (3) the single most critical issue — the top CRITICAL item from the Priority Action Items list below. Do not introduce judgments not already present in the agent outputs.]
 
-**Preliminary Recommendation**: [Copy exactly from Agent 6 Part 5 — do not paraphrase]
+**Contribution Rating**: [From the Contribution Synthesis — if Agents 7 and 8 agree, state the shared rating; if they differ, state both (e.g., "Significant (advocate) / Incremental (skeptic)") and name the crux of disagreement in one clause]
+
+**Preliminary Recommendation**: [Copy exactly from Agent 6 Part 4 — do not paraphrase. If both Agents 7 and 8 rate the contribution "Insufficient for target journal", append: "Note: both contribution reviewers rate the contribution below the target journal's bar, which makes desk rejection likely regardless of execution."]
 
 ---
 
-## 1. Contribution & Referee Assessment
+## 1. Central Contribution
+
+### Advocate's Case
+[Agent 7 output]
+
+### Skeptic's Case
+[Agent 8 output]
+
+### Synthesis
+[Written by you, the coordinator, using only material from Agents 7 and 8 — one short paragraph. First state where the two agents agree: those are the robust conclusions. Then name the crux of any disagreement in one sentence — that is the judgment call the authors must win in the introduction. State the synthesized rating: if the two ratings agree, use that rating; if they differ, report both and do not average them. End with one sentence on the single change that would most strengthen the contribution (from Agent 8 Part 3), and this standing caveat: "Novelty relative to literature not cited in the paper has not been verified."]
+
+---
+
+## 2. Referee Assessment (Identification, Analyses, Positioning & Fit)
 
 [Agent 6 output]
 
 ---
 
-## 2. Unsupported Claims & Identification Integrity
+## 3. Unsupported Claims & Identification Integrity
 
 [Agent 3 output]
 
 ---
 
-## 3. Internal Consistency & Cross-Reference Verification
+## 4. Internal Consistency & Cross-Reference Verification
 
 [Agent 2 output]
 
 ---
 
-## 4. Mathematics, Equations & Notation
+## 5. Mathematics, Equations & Notation
 
 [Agent 4 output]
 
 ---
 
-## 5. Tables, Figures & Documentation
+## 6. Tables, Figures & Documentation
 
 [Agent 5 output]
 
 ---
 
-## 6. Spelling, Grammar & Style
+## 7. Spelling, Grammar & Style
 
 [Agent 1 output, preserving its structure]
 
@@ -517,7 +634,9 @@ where `[YYYY-MM-DD]` is today's date.
 
 ## Priority Action Items
 
-Each agent has tagged its findings as `[CRITICAL]`, `[MAJOR]`, or `[MINOR]`. Collect all tagged items across agents and rank them here using the following triage hierarchy: `[CRITICAL]` items from Agent 3 and Agent 6 Part 2 first, then `[CRITICAL]` from Agent 6 Part 3, then remaining `[CRITICAL]` items by agent order, then all `[MAJOR]` items, then `[MINOR]` items.
+Each of Agents 1–6 has tagged its findings as `[CRITICAL]`, `[MAJOR]`, or `[MINOR]`. Collect all tagged items across those agents and rank them here using the following triage hierarchy: `[CRITICAL]` items from Agent 3 and Agent 6 Part 1 first, then `[CRITICAL]` from Agent 6 Part 2, then remaining `[CRITICAL]` items by agent order, then all `[MAJOR]` items, then `[MINOR]` items.
+
+If the synthesized contribution rating is Incremental or Insufficient, insert one additional `[CRITICAL]` item at the very top of the CRITICAL list summarizing the contribution gap and the single change identified in the Contribution Synthesis.
 
 **CRITICAL** (must fix — these could cause desk rejection or major referee objections):
 1. ...
@@ -538,6 +657,7 @@ Each agent has tagged its findings as `[CRITICAL]`, `[MAJOR]`, or `[MINOR]`. Col
 
 After saving, report to the user:
 1. The path to the saved report
-2. The preliminary recommendation from Agent 6
+2. The preliminary recommendation from Agent 6 and the synthesized contribution rating (noting any advocate/skeptic disagreement)
 3. The top 5 priority action items
 4. How many issues were flagged in each category (counts)
+5. If any table or figure files on disk were excluded as unreferenced in Phase 1, their count and a one-line note that they were not reviewed

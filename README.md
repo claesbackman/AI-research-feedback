@@ -3,20 +3,33 @@
 A collection of [Claude Code](https://claude.ai/code) skills for academic research review. This tool was developed by [Claes Bäckman](https://claesbackman.com).
 
 
-## Skills in this folder
+## Skills in this repo
 
-- `Skills/review-paper.md`: Full referee-style paper review command.
-- `Skills/review-paper-light.md`: Fast 2-agent paper check.
-- `Skills/review-paper-code.md`: Paper-code reproducibility and alignment review.
-- `Skills/review-pap.md`: Pre-analysis plan review command.
-- `Skills/review-grant.md`: Grant proposal review command.
+Each skill lives in its own folder containing a `SKILL.md` file:
+
+- `Skills/review-paper/SKILL.md`: Full 8-agent referee-style paper review.
+- `Skills/review-paper-light/SKILL.md`: Fast 2-agent paper check.
+- `Skills/review-paper-code/SKILL.md`: Paper–code reproducibility and alignment review.
+- `Skills/review-pap/SKILL.md`: Pre-analysis plan review.
+- `Skills/review-grant/SKILL.md`: Grant proposal review.
+
+
+## How the skills work
+
+These are [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code). Install one into `~/.claude/skills/<name>/SKILL.md` and invoke it by typing `/<name>` (for example, `/review-paper`) inside Claude Code. The per-skill installation commands below create the required folder and download the `SKILL.md` for you.
+
+A global install (`~/.claude/skills/`) is available in every project. A project-local install (`.claude/skills/`) applies only to that repository. Skills are picked up the next time you start Claude Code in the target directory.
+
+Each skill sets `disable-model-invocation: true`, so a review runs only when you explicitly type its `/` command. Claude will never launch a multi-agent review on its own.
+
+> **Already installed these as slash commands?** Custom commands and skills have merged in Claude Code, so any existing `~/.claude/commands/<name>.md` file keeps working and still provides `/<name>`. To avoid two definitions of the same command, delete the old `~/.claude/commands/<name>.md` file after installing the skill version.
 
 
 ## Skills
 
 ### `review-paper` — Pre-Submission Referee Report
 
-Runs a rigorous pre-submission review of an academic paper, simulating the scrutiny of a specific journal's editorial board. Six specialized review agents run in parallel and consolidate their findings into a single structured report.
+Runs a rigorous pre-submission review of an academic paper, simulating the scrutiny of a specific journal's editorial board. Eight specialized review agents run in parallel and consolidate their findings into a single structured report. The review only reads the paper's own source files (the main .tex file and everything it includes) and ignores old drafts, response letters, and previous review reports in the same folder.
 
 **What it reviews:**
 
@@ -27,20 +40,24 @@ Runs a rigorous pre-submission review of an academic paper, simulating the scrut
 | 3 | Unsupported claims and identification integrity |
 | 4 | Mathematics, equations, and notation |
 | 5 | Tables, figures, and their documentation |
-| 6 | Contribution evaluation (adversarial journal-specific referee) |
+| 6 | Referee assessment (identification, analyses, positioning, journal fit) |
+| 7 | Contribution advocate (steelman, grounded in the paper's own bibliography) |
+| 8 | Contribution skeptic (attack, grounded in the paper's own bibliography) |
+
+Agents 7 and 8 independently rate the central contribution from opposite directions. The report reconciles them in a synthesis section that states where they agree, names the crux of any disagreement, and flags novelty claims that cannot be verified from the paper's own bibliography.
 
 **Installation:**
 
 ```bash
-mkdir -p ~/.claude/commands && curl -o ~/.claude/commands/review-paper.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper.md
+mkdir -p ~/.claude/skills/review-paper && curl -o ~/.claude/skills/review-paper/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper/SKILL.md
 ```
 
 For a project-local install:
 
 ```bash
-mkdir -p .claude/commands && curl -o .claude/commands/review-paper.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper.md
+mkdir -p .claude/skills/review-paper && curl -o .claude/skills/review-paper/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper/SKILL.md
 ```
 
 **Usage:**
@@ -59,11 +76,11 @@ mkdir -p .claude/commands && curl -o .claude/commands/review-paper.md \
 | Finance | `JF`, `JFE`, `RFS`, `JFQA` |
 | Macro | `AEJMacro`, `JME`, `RED` |
 
-If no journal is specified, the command applies high general standards without a specific journal persona. If no path is provided, it auto-detects the main `.tex` file.
+If no journal is specified, the skill applies high general standards without a specific journal persona. If no path is provided, it auto-detects the main `.tex` file.
 
 **Output:**
 
-Saves a consolidated report to `PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md` in the current directory, automatically appending `-v2`, `-v3`, and so on if a file already exists.
+Saves a consolidated report to `reviews/PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md`, automatically appending `-v2`, `-v3`, and so on if a file already exists. Reports live in a `reviews/` subfolder so they cannot contaminate future runs.
 
 **Customization:**
 
@@ -83,15 +100,15 @@ Runs a fast 2-agent pre-submission check for an economics paper. It focuses on c
 **Installation:**
 
 ```bash
-mkdir -p ~/.claude/commands && curl -o ~/.claude/commands/review-paper-light.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-light.md
+mkdir -p ~/.claude/skills/review-paper-light && curl -o ~/.claude/skills/review-paper-light/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-light/SKILL.md
 ```
 
 For a project-local install:
 
 ```bash
-mkdir -p .claude/commands && curl -o .claude/commands/review-paper-light.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-light.md
+mkdir -p .claude/skills/review-paper-light && curl -o .claude/skills/review-paper-light/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-light/SKILL.md
 ```
 
 **Usage:**
@@ -101,11 +118,11 @@ mkdir -p .claude/commands && curl -o .claude/commands/review-paper-light.md \
 /review-paper-light path/to/main.tex
 ```
 
-If no path is provided, the command auto-detects the main `.tex` file.
+If no path is provided, the skill auto-detects the main `.tex` file.
 
 **Output:**
 
-Saves a short prioritized report to `QUICK_REVIEW_[YYYY-MM-DD].md` in the current directory, automatically versioning the filename if one already exists.
+Saves a short prioritized report to `reviews/QUICK_REVIEW_[YYYY-MM-DD].md`, automatically versioning the filename if one already exists.
 
 **Requirements:**
 
@@ -126,6 +143,20 @@ Runs a paper-code review for empirical research projects. It discovers the main 
 | Code quality | Structure, commented-out code, opaque transforms, major thresholds |
 | Paper-code alignment | Tables, variables, sample restrictions, methods, clustering, fixed effects |
 
+**Installation:**
+
+```bash
+mkdir -p ~/.claude/skills/review-paper-code && curl -o ~/.claude/skills/review-paper-code/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-code/SKILL.md
+```
+
+For a project-local install:
+
+```bash
+mkdir -p .claude/skills/review-paper-code && curl -o .claude/skills/review-paper-code/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-code/SKILL.md
+```
+
 **Usage:**
 
 ```text
@@ -142,7 +173,7 @@ Runs a paper-code review for empirical research projects. It discovers the main 
 
 **Output:**
 
-Writes a report to `code_review_report.md` in the current working directory.
+Writes a report to `reviews/code_review_report.md`, creating the `reviews/` folder if needed.
 
 **Requirements:**
 
@@ -151,20 +182,20 @@ Writes a report to `code_review_report.md` in the current working directory.
 
 ### `review-pap` — Pre-Analysis Plan Review
 
-Runs a 6-agent pre-submission review of a pre-analysis plan (PAP). The command auto-detects the main PAP and supporting files, then evaluates writing quality, specification completeness, internal consistency, identification strategy, statistical analysis, implementation details, and registry or journal fit.
+Runs a 6-agent pre-submission review of a pre-analysis plan (PAP). The skill auto-detects the main PAP and supporting files, then evaluates writing quality, specification completeness, internal consistency, identification strategy, statistical analysis, implementation details, and registry or journal fit.
 
 **Installation:**
 
 ```bash
-mkdir -p ~/.claude/commands && curl -o ~/.claude/commands/review-pap.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-pap.md
+mkdir -p ~/.claude/skills/review-pap && curl -o ~/.claude/skills/review-pap/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-pap/SKILL.md
 ```
 
 For a project-local install:
 
 ```bash
-mkdir -p .claude/commands && curl -o .claude/commands/review-pap.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-pap.md
+mkdir -p .claude/skills/review-pap && curl -o .claude/skills/review-pap/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-pap/SKILL.md
 ```
 
 **Usage:**
@@ -181,7 +212,7 @@ mkdir -p .claude/commands && curl -o .claude/commands/review-pap.md \
 - Journal standards: `AER`, `QJE`, `JPE`, `RESTUD`, `AEJ`, `JEEA`
 - General standards: `top-journal`, `working-paper`
 
-If no target is specified, the command defaults to `top-journal`. If no path is provided, it auto-detects the main PAP file.
+If no target is specified, the skill defaults to `top-journal`. If no path is provided, it auto-detects the main PAP file.
 
 **Supporting files it can inspect:**
 
@@ -193,7 +224,7 @@ If no target is specified, the command defaults to `top-journal`. If no path is 
 
 **Output:**
 
-Saves a consolidated report to `PAP_REVIEW_[YYYY-MM-DD].md` in the current directory.
+Saves a consolidated report to `reviews/PAP_REVIEW_[YYYY-MM-DD].md`, automatically versioning the filename if one already exists.
 
 **Requirements:**
 
@@ -202,20 +233,20 @@ Saves a consolidated report to `PAP_REVIEW_[YYYY-MM-DD].md` in the current direc
 
 ### `review-grant` — Grant Proposal Review
 
-Runs a 6-agent pre-submission panel review of a grant proposal. The command auto-detects the main proposal and supporting documents, then evaluates clarity, compliance signals, internal consistency, significance, innovation, research design, feasibility, budget logic, team readiness, and fit to the target funder or program.
+Runs a 6-agent pre-submission panel review of a grant proposal. The skill auto-detects the main proposal and supporting documents, then evaluates clarity, compliance signals, internal consistency, significance, innovation, research design, feasibility, budget logic, team readiness, and fit to the target funder or program.
 
 **Installation:**
 
 ```bash
-mkdir -p ~/.claude/commands && curl -o ~/.claude/commands/review-grant.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-grant.md
+mkdir -p ~/.claude/skills/review-grant && curl -o ~/.claude/skills/review-grant/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-grant/SKILL.md
 ```
 
 For a project-local install:
 
 ```bash
-mkdir -p .claude/commands && curl -o .claude/commands/review-grant.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-grant.md
+mkdir -p .claude/skills/review-grant && curl -o .claude/skills/review-grant/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-grant/SKILL.md
 ```
 
 **Usage:**
@@ -228,10 +259,11 @@ mkdir -p .claude/commands && curl -o .claude/commands/review-grant.md \
 
 **Supported funders/programs:**
 
-- US federal science and health: `NSF`, `NIH`, `ERC`, `HorizonEurope`
+- US federal science and health: `NSF`, `NIH`
+- International research funders: `ERC`, `HorizonEurope`
 - General proposal standards: `major-funder`, `foundation`
 
-If no target is specified, the command defaults to `major-funder`. If no path is provided, it auto-detects the main proposal file.
+If no target is specified, the skill defaults to `major-funder`. If no path is provided, it auto-detects the main proposal file.
 
 **Supporting files it can inspect:**
 
@@ -243,7 +275,7 @@ If no target is specified, the command defaults to `major-funder`. If no path is
 
 **Output:**
 
-Saves a consolidated report to `GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md` in the current directory.
+Saves a consolidated report to `reviews/GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md`, automatically versioning the filename if one already exists.
 
 **Requirements:**
 

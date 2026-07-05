@@ -1,5 +1,9 @@
 ---
+name: review-paper-light
 description: Run a fast 2-agent pre-submission check for an economics paper — focuses on contribution, identification, and causal overclaiming. Completes in ~1 minute.
+argument-hint: [optional: path/to/main.tex]
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
+disable-model-invocation: true
 ---
 
 You are coordinating a fast pre-submission check of an economics paper. You will run 2 agents in parallel and consolidate their output into a short, prioritized report.
@@ -9,10 +13,10 @@ You are coordinating a fast pre-submission check of an economics paper. You will
 If a file path is provided in `$ARGUMENTS`, use it as the main LaTeX file. Otherwise, auto-detect:
 
 1. Use Glob with pattern `**/*.tex` to list all .tex files (exclude `_minted-*`, `build/`, `output/`).
-2. Identify the main document: the .tex file containing `\documentclass` or `\begin{document}`.
-3. Read the main file and extract all `\input{}`, `\include{}`, and `\subfile{}` references.
-4. Read all component .tex files.
-5. Use Glob to find table files: `**/Tables/**/*.tex`, `**/tables/**/*.tex`, root-level `*table*.tex`.
+2. Identify the main document among the .tex files containing `\documentclass` or `\begin{document}`. If several candidates match, discard beamer slides and files whose name or folder suggests an old draft or a response letter (`response*`, `letter*`, `slides*`, `old*`, `archive/`, etc.), then choose the candidate with the largest include-graph. If still ambiguous, ask the user.
+3. Read the main file and extract all `\input{}`, `\include{}`, and `\subfile{}` references (recursively) to build the paper's include-graph.
+4. Read all component .tex files. **The file list passed to the agents is exactly the main file plus its include-graph** — do not pass .tex files the paper does not include (old drafts, response letters, slides, notes).
+5. Use Glob to find table files: `**/Tables/**/*.tex`, `**/tables/**/*.tex`, root-level `*table*.tex`. Keep only tables that are `\input{}`/`\include{}`d from the include-graph.
 
 Record:
 - Full path of each .tex file
@@ -22,6 +26,10 @@ Record:
 
 In a **single message**, launch both agents using the Agent tool with `subagent_type: "general-purpose"`.
 
+**Scope guard — prepend the following block verbatim to both agents' prompts:**
+
+> Review ONLY the files listed at the end of this prompt. Do not use Glob, Grep, or directory listings to discover other files, and do not open any file that is not on the list. In particular, ignore any previous review reports (`QUICK_REVIEW_*.md`, `PRE_SUBMISSION_REVIEW_*.md`, anything in a `reviews/` folder), referee reports, response letters, notes, README files, and old drafts — none of these may influence your review. Within the listed .tex files, treat `%`-commented-out lines and `\todo{}` content as if they do not exist: review only the live text of the paper.
+
 ---
 
 ### AGENT A — Contribution, Identification & Required Analyses
@@ -30,12 +38,12 @@ You are a demanding associate editor at a top economics journal. Read all .tex f
 
 **Part 1 — The Central Contribution**
 
-- State in one sentence what the paper claims to contribute.
-- Is this finding genuinely new, or is it a replication of known results in a new setting?
-- What is the closest prior paper? What does this paper add beyond it?
-- Does this finding change how economists think about the topic?
+- State in one sentence what the paper claims to contribute, in the authors' own framing.
+- Classify the contribution type(s) — more than one may apply: new question, new data, new method, new setting, or new answer to an old question.
+- From the paper's own bibliography and literature review, identify the 2–3 closest prior papers. For each, state in one sentence what this paper adds beyond it, grounded in what the results actually deliver. Do not rely on your general knowledge of the literature to assert what does or does not exist. If you draw on knowledge beyond the paper's bibliography, label the claim `[UNVERIFIED — authors must confirm]` and never invent citation details.
+- Does the framing overstate? Does the introduction promise more than the results deliver?
 - Rate the contribution: [Transformative | Significant | Incremental | Insufficient for a top field journal]
-- Justify in 2–3 sentences.
+- Justify in 2–3 sentences, noting that novelty relative to uncited literature is not verified.
 
 **Part 2 — Identification and Credibility**
 
@@ -55,6 +63,10 @@ Tag each required analysis `[CRITICAL]`.
 
 Write 3–5 specific, pointed questions that get at the paper's weakest points. Frame them as a referee would.
 
+**Part 5 — Preliminary Recommendation**
+
+Based on Parts 1–3, state exactly one of: [Send to referees | Revise before sending to referees | Desk reject], with one sentence of justification.
+
 **Output format:**
 
 ```
@@ -71,6 +83,9 @@ Write 3–5 specific, pointed questions that get at the paper's weakest points. 
 
 ### Part 4 — Questions to the Authors
 [numbered list of 3–5 questions]
+
+### Part 5 — Preliminary Recommendation
+[one of: Send to referees | Revise before sending to referees | Desk reject — with one sentence of justification]
 ```
 
 The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
@@ -123,9 +138,11 @@ The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 
 After both agents return, consolidate into a single report.
 
-Check whether `QUICK_REVIEW_[YYYY-MM-DD].md` already exists. If so, append `-v2` (or `-v3`, etc.).
+Save the report inside a `reviews/` subfolder of the paper's directory (create it if it does not exist) — keeping reports out of the paper's root directory prevents them from being picked up by future runs of this skill.
 
-Save to: `QUICK_REVIEW_[YYYY-MM-DD].md`
+Check whether `reviews/QUICK_REVIEW_[YYYY-MM-DD].md` already exists. If so, append `-v2` (or `-v3`, etc.).
+
+Save to: `reviews/QUICK_REVIEW_[YYYY-MM-DD].md`
 
 **Report structure:**
 
@@ -142,7 +159,7 @@ Save to: `QUICK_REVIEW_[YYYY-MM-DD].md`
 
 [2–3 sentences: (1) what the paper does; (2) contribution rating from Agent A; (3) the single most pressing issue from the Priority Items below.]
 
-**Preliminary Recommendation**: [Send to referees | Revise before sending to referees | Desk reject] — copy exactly from Agent A Part 1 rating logic; do not paraphrase.
+**Preliminary Recommendation**: [Copy exactly from Agent A Part 5 — do not paraphrase]
 
 ---
 
