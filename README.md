@@ -1,6 +1,6 @@
 # Using AI to get feedback on your research
 
-A collection of [Claude Code](https://claude.ai/code) skills for academic research review. This tool was developed by [Claes Bäckman](https://claesbackman.com).
+A collection of [Claude Code](https://claude.ai/code) skills for reviewing and understanding academic research. This tool was developed by [Claes Bäckman](https://claesbackman.com).
 
 
 ## Skills in this repo
@@ -12,6 +12,7 @@ Each skill lives in its own folder containing a `SKILL.md` file:
 - `Skills/review-paper-code/SKILL.md`: Paper–code reproducibility and alignment review.
 - `Skills/review-pap/SKILL.md`: Pre-analysis plan review.
 - `Skills/review-grant/SKILL.md`: Grant proposal review.
+- `Skills/explain-diff/SKILL.md`: Explain a code change as an offline HTML page with a quiz.
 
 
 ## How the skills work
@@ -281,6 +282,63 @@ Saves a consolidated report to `reviews/GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md`, 
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
 - A proposal in a readable format such as `.md`, `.txt`, or `.tex`. The skill can also attempt to work with `.pdf` and `.docx`, while noting accessibility limitations if needed.
+
+### `explain-diff` — Explain a Code Change
+
+Explains a change to your analysis code well enough that someone who did not write it could defend it. This is the one skill here that is not a review. It is aimed at the coauthor who needs to understand what an AI assistant or a collaborator just did to the estimation pipeline, and at your future self returning to a project after six months.
+
+The skill reads the diff and the surrounding code from scratch, ignoring any account of the change that already exists in the conversation, then writes a self-contained HTML page you open in a browser.
+
+The idea comes from Geoffrey Litt's [Understanding is the new bottleneck](https://www.geoffreylitt.com/2026/07/02/understanding-is-the-new-bottleneck), which argues that once agents write most of the code, the scarce resource is not verification but the researcher's own grasp of the system — you need the concepts in your head to think about what to do next. Litt proposes explainer documents and embedded quizzes as a deliberate speed regulator. This skill is that proposal applied to empirical research code, where the thing you must not lose track of is what happened to the sample and the coefficients.
+
+**What the page contains:**
+
+| Section | Content |
+|---|---|
+| 1 | What the code did before, established by reading the surrounding scripts |
+| 2 | What changed and why, in plain language with no code |
+| 3 | Consequences for the results — which sample, which coefficients, which tables, and in which direction |
+| 4 | Walkthrough of the changed code, grouped by purpose rather than by file |
+| 5 | A five-question multiple-choice quiz with explanations for every option |
+
+Section 3 is the point of the skill. It requires verification rather than inference: comparing observation counts and coefficients between runs, checking whether a modified table file differs in its numbers or only in a timestamp, and reading any new output file before quoting a figure from it. When nothing about the results changed, the page has to say so explicitly and show the evidence.
+
+At least two quiz questions must test empirical consequences rather than syntax — which observations enter the sample, what the coefficient now identifies, what would change if an assumption failed.
+
+**Installation:**
+
+```bash
+mkdir -p ~/.claude/skills/explain-diff && curl -o ~/.claude/skills/explain-diff/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/explain-diff/SKILL.md
+```
+
+For a project-local install:
+
+```bash
+mkdir -p .claude/skills/explain-diff && curl -o .claude/skills/explain-diff/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/explain-diff/SKILL.md
+```
+
+**Usage:**
+
+```text
+/explain-diff
+/explain-diff abc123
+/explain-diff main..HEAD
+```
+
+With no argument the skill explains the uncommitted working tree against `HEAD`, including files that are new and therefore invisible to `git diff`. A single ref is compared against the working tree. A range is used as given.
+
+**Output:**
+
+Writes one HTML file **outside the repository**, saved to `~/Documents/` unless you name another directory. Keeping the page out of the repo means it never lands in a commit or in your paper's folder, and the skill confirms with `git status` afterwards that nothing in the project changed. You also get a plain-text summary in the terminal, so you do not have to open the page to learn whether the results moved.
+
+Filenames end in a ref tag so the pages stay matchable to commits as they accumulate: `2026-08-01-cluster-by-municipality-wt-e956a7e.html` for a working tree against `HEAD`, or the short SHAs for a ref or a range. The page itself carries the full 40-character SHAs, the branch, and the exact comparison. When the comparison involves an uncommitted working tree, the page says so and lists the files, because that state is not reproducible later from the SHA alone.
+
+**Requirements:**
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code). No subagents are used, so this skill runs in a single context.
+- A git repository. Everything else — Stata, R, Python, LaTeX — is optional.
 
 ## License
 
