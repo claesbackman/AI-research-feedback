@@ -13,6 +13,9 @@ Each skill lives in its own folder containing a `SKILL.md` file:
 - `Skills/review-pap/SKILL.md`: Pre-analysis plan review.
 - `Skills/review-grant/SKILL.md`: Grant proposal review.
 - `Skills/explain-diff/SKILL.md`: Explain a code change as an offline HTML page with a quiz.
+- `Skills/audit-analysis/SKILL.md`: Adversarial audit of changed analysis code, run by an isolated subagent.
+- `Skills/paper-version/SKILL.md`: Turn a LaTeX paper into a policy brief, one-page, or five-page summary with a standalone HTML page.
+- `Skills/pdf-to-markdown/SKILL.md`: Convert a PDF to readable markdown, trimmed at the references.
 
 
 ## How the skills work
@@ -21,7 +24,19 @@ These are [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code). 
 
 A global install (`~/.claude/skills/`) is available in every project. A project-local install (`.claude/skills/`) applies only to that repository. Skills are picked up the next time you start Claude Code in the target directory.
 
-Each skill sets `disable-model-invocation: true`, so a review runs only when you explicitly type its `/` command. Claude will never launch a multi-agent review on its own.
+The review skills, `audit-analysis`, and `paper-version` set `disable-model-invocation: true`, so they run only when you explicitly type their `/` command. Claude will never launch a multi-agent review on its own. `pdf-to-markdown` is the exception: Claude may also reach for it when you ask it to read a PDF.
+
+## Install everything at once
+
+**Without a terminal (Windows Explorer, macOS Finder).** [Download the repository as a zip](https://github.com/claesbackman/AI-research-feedback/archive/refs/heads/main.zip), unzip it, and copy each folder inside `Skills/` (for example `review-paper`, `review-paper-light`) into `~/.claude/skills/`. That is a hidden folder in your user folder — `C:\Users\you\.claude\skills` on Windows, `/Users/you/.claude/skills` on macOS. Restart VS Code or Claude Code afterwards.
+
+**With a terminal (macOS, Linux, WSL).** One line installs every skill globally:
+
+```bash
+git clone --depth 1 https://github.com/claesbackman/AI-research-feedback.git /tmp/airf && mkdir -p ~/.claude/skills && cp -R /tmp/airf/Skills/. ~/.claude/skills/ && rm -rf /tmp/airf
+```
+
+Re-run the same line later to update. The per-skill `curl` commands below install one skill at a time.
 
 > **Already installed these as slash commands?** Custom commands and skills have merged in Claude Code, so any existing `~/.claude/commands/<name>.md` file keeps working and still provides `/<name>`. To avoid two definitions of the same command, delete the old `~/.claude/commands/<name>.md` file after installing the skill version.
 
@@ -339,6 +354,140 @@ Filenames end in a ref tag so the pages stay matchable to commits as they accumu
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code). No subagents are used, so this skill runs in a single context.
 - A git repository. Everything else — Stata, R, Python, LaTeX — is optional.
+
+### `audit-analysis` — Adversarial Audit of Changed Analysis Code
+
+Finds errors in changed empirical code before a referee does. The skill hands the diff to a subagent with a clean context and tells it to break the code. That isolation is the point: whoever wrote the code — including the current Claude session, if it helped — cannot steer the findings. It is the concrete form of the "fresh agent with no stake in the code" check, and it complements `review-paper-code`, which asks whether the paper matches the code rather than whether the code is right.
+
+**What the auditor checks:**
+
+| Area | Focus |
+|---|---|
+| Claims vs. code | Do comments and commit messages match what actually runs? |
+| Sample | N before and after every filter, merge, and collapse, taken from logs |
+| Merges | Keys, uniqueness, fate of unmatched observations, duplicate id-period pairs |
+| Variables | Units, logs vs. levels, deflation, lag alignment, name vs. construction |
+| Silent failures | Missings coerced to zero, `if x > 0` on missing, `destring ... force`, `fillna(0)` |
+| Estimation | Clustering level and count, what the fixed effects absorb, weights, estimation N |
+
+Every finding must cite a file, a line, and a quoted excerpt, and is tagged CONFIRMED (visible in the code) or SUSPECTED (needs the data). Unanchored findings are dropped and counted. The auditor also reports, category by category, where it found nothing, and closes with the one thing it could not check without the data.
+
+**Installation:**
+
+```bash
+mkdir -p ~/.claude/skills/audit-analysis && curl -o ~/.claude/skills/audit-analysis/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/audit-analysis/SKILL.md
+```
+
+For a project-local install:
+
+```bash
+mkdir -p .claude/skills/audit-analysis && curl -o .claude/skills/audit-analysis/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/audit-analysis/SKILL.md
+```
+
+**Usage:**
+
+```text
+/audit-analysis
+/audit-analysis main
+/audit-analysis abc123
+```
+
+With no argument the working tree and commits are audited against `main`. Pass a branch, tag, or commit to audit against that instead. Diffs above roughly 1,500 changed lines are split across two auditors.
+
+**Output:**
+
+Findings are relayed in the terminal, worst first, without softening. Nothing is written or changed in the repository. If you want repairs, that is a separate request.
+
+**Requirements:**
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
+- A git repository with Stata, R, or Python analysis code. Logs improve the sample checks but are not required.
+
+### `paper-version` — Policy Brief, One-Page, or Five-Page Summary
+
+Turns a LaTeX research paper into a version for a non-specialist audience, checks it against the paper, and produces a standalone HTML page ready for GitHub Pages. Four agents run in sequence: a reader extracts the paper's content and claims verbatim, a writer drafts the requested format, a reviewer compares every number and causal claim in the draft against the extraction, and — after you have read the review and edited the draft — a fourth agent builds the page.
+
+**Formats:**
+
+| Argument | Output |
+|---|---|
+| `brief` | Two-page policy brief with fixed sections: The Question, What We Do, Key Findings, Policy Implications, Caveats (500–600 words) |
+| `1page` | One page of flowing prose for a general reader, leading with the main finding (350–400 words) |
+| `5page` | Narrative summary with light structure: Background, What We Did, What We Found, Why It Matters, Limitations (1,400–1,600 words) |
+
+The reviewer flags three kinds of problem: wrong or misattributed numbers, causal language stronger than the paper's own, and shifts in emphasis away from what the paper treats as central. The skill pauses after the review so you can edit the draft before the page is built.
+
+**Installation:**
+
+```bash
+mkdir -p ~/.claude/skills/paper-version && curl -o ~/.claude/skills/paper-version/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/paper-version/SKILL.md
+```
+
+For a project-local install:
+
+```bash
+mkdir -p .claude/skills/paper-version && curl -o .claude/skills/paper-version/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/paper-version/SKILL.md
+```
+
+**Usage:**
+
+```text
+/paper-version brief
+/paper-version 1page
+/paper-version 5page
+```
+
+Run it from the paper's project folder. The skill finds the main `.tex` file and follows `\input` and `\include`.
+
+**Output:**
+
+Writes to an `output/` folder in the project: `paper_extraction.md`, `[format]_draft.md`, `[format]_review.md`, and `index.html`. PNG or JPG versions of the paper's key figures are embedded when they exist in the project.
+
+**Requirements:**
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
+- A LaTeX paper.
+
+### `pdf-to-markdown` — Convert a PDF to Readable Markdown
+
+Converts a PDF to a markdown file saved next to it, with page markers every twenty pages and the text trimmed at the references or appendix so the main text is what enters the context window. Useful before running any of the review skills on a paper you only have as a PDF, and for reading long documents without spending context on the bibliography.
+
+When `pdftotext` (part of poppler) is installed the conversion runs in one shot outside the model and takes seconds regardless of length. Without it the skill falls back to reading the PDF in twenty-page chunks, which works but is slow for long documents.
+
+**Installation:**
+
+```bash
+mkdir -p ~/.claude/skills/pdf-to-markdown && curl -o ~/.claude/skills/pdf-to-markdown/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/pdf-to-markdown/SKILL.md
+```
+
+For a project-local install:
+
+```bash
+mkdir -p .claude/skills/pdf-to-markdown && curl -o .claude/skills/pdf-to-markdown/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/pdf-to-markdown/SKILL.md
+```
+
+Recommended: `brew install poppler` (macOS) or `apt install poppler-utils` (Linux, WSL) for the fast path.
+
+**Usage:**
+
+```text
+/pdf-to-markdown path/to/paper.pdf
+```
+
+**Output:**
+
+`path/to/paper.md`, plus a short report: method used, pages processed, where the text was trimmed, and any unreadable pages.
+
+**Requirements:**
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code). No subagents are used.
+- Optional: `pdftotext`. The page-count step uses macOS `mdls` when available and probes the file otherwise.
 
 ## License
 
