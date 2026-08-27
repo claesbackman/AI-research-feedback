@@ -9,6 +9,7 @@ Each skill lives in its own folder containing a `SKILL.md` file:
 
 - `Skills/review-paper/SKILL.md`: Full 8-agent referee-style paper review.
 - `Skills/review-paper-light/SKILL.md`: Fast 2-agent paper check.
+- `Skills/review-paper-checks/SKILL.md`: Fast 3-agent mechanical check — spelling, internal consistency, unsupported claims.
 - `Skills/review-paper-code/SKILL.md`: Paper–code reproducibility and alignment review.
 - `Skills/review-pap/SKILL.md`: Pre-analysis plan review.
 - `Skills/review-grant/SKILL.md`: Grant proposal review.
@@ -144,6 +145,44 @@ Saves a short prioritized report to `reviews/QUICK_REVIEW_[YYYY-MM-DD].md`, auto
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
 - A LaTeX paper.
+
+### `review-paper-checks` — Mechanical Paper Check
+
+Runs a fast 3-agent check for things that are *wrong* in a paper rather than things that are debatable: spelling and grammar, internal consistency (numbers in the text against numbers in the tables, abstract against results, terminology drift, broken cross-references and citations), and unsupported claims (causal language the design does not license, mechanisms asserted as facts, missing caveats, unverified priority assertions).
+
+It deliberately does not judge the contribution, evaluate the identification strategy, or issue a recommendation. Use `review-paper-light` or `review-paper` for that. Run `review-paper-checks` on a draft you already believe in, shortly before submission.
+
+**Installation:**
+
+```bash
+mkdir -p ~/.claude/skills/review-paper-checks && curl -o ~/.claude/skills/review-paper-checks/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-checks/SKILL.md
+```
+
+For a project-local install:
+
+```bash
+mkdir -p .claude/skills/review-paper-checks && curl -o .claude/skills/review-paper-checks/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-checks/SKILL.md
+```
+
+**Usage:**
+
+```text
+/review-paper-checks
+/review-paper-checks path/to/main.tex
+```
+
+If no path is provided, the skill auto-detects the main `.tex` file and follows its `\input{}` graph.
+
+**Output:**
+
+Saves a prioritized fix list to `reviews/PAPER_CHECK_[YYYY-MM-DD].md`, automatically versioning the filename if one already exists. Afterwards it offers to apply the unambiguous mechanical fixes (spelling, grammar, broken references) directly to the `.tex` files, leaving every claim-level item for you to judge.
+
+**Requirements:**
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
+- A LaTeX paper. Table `.tex` files and a `.bib` file, if present, let the consistency and citation checks run.
 
 ### `review-paper-code` — Paper-Code Reproducibility Review
 
