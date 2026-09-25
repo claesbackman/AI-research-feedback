@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400">
+  <!-- placeholder: replace with a converted source figure (sh figs/convert_figs.sh <source-dir> Name) -->
+  <rect x="60" y="20" width="560" height="330" fill="#FFFFFF" stroke="#C9CEC6"/>
+  <line x1="60" y1="350" x2="620" y2="350" stroke="#1C2224"/>
+  <line x1="60" y1="20" x2="60" y2="350" stroke="#1C2224"/>
+  <path d="M80 320 L600 60" stroke="#C4452A" stroke-width="2" stroke-dasharray="4 4" fill="none"/>
+  <g fill="#1C2224"><circle cx="110" cy="300" r="4"/><circle cx="180" cy="290" r="4"/><circle cx="250" cy="240" r="4"/><circle cx="320" cy="230" r="4"/><circle cx="390" cy="170" r="4"/><circle cx="460" cy="150" r="4"/><circle cx="530" cy="100" r="4"/><circle cx="590" cy="70" r="4"/></g>
+  <text x="340" y="385" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#667074">placeholder figure — replace with figs/&lt;Name&gt;.svg</text>
+</svg>
