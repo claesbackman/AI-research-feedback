@@ -1,0 +1,168 @@
+% deck.tex — an explorable deck in beamer. Build with: sh build.sh
+% (lualatex; the theme loads the fonts TeX Live ships). Every frame below
+% demonstrates one layout from theme/explorable.sty. Replace the content, keep
+% the patterns: one idea per frame, title as an assertion, a \note on every
+% frame that tells the presenter what to do and say.
+\documentclass[aspectratio=169, 10pt]{beamer}
+\usepackage{theme/explorable}
+\input{data/numbers}
+
+% Topic aliases for the four colour tokens, one line per token, in the topic's
+% words. Charts and prose use the aliases; the generic names stay.
+%   \colorlet{gain}{primary}  \colorlet{yield}{contrast}  \colorlet{anna}{actora}  \colorlet{bo}{actorb}
+
+\title{Deck title as a claim}
+\subtitle{Venue, month year}
+\author{Author One ~·~ Author Two}
+\institute{Institution ~·~ Institution}
+\date{}
+
+% \usepackage[style=authoryear]{biblatex} \addbibresource{references.bib}   % if the deck cites
+
+\begin{document}
+
+\begin{frame}[plain]
+\titlepage
+\note{Slide 1 is the title: screenshot numbers, plan numbers and note numbers all start here.}
+\end{frame}
+
+\begin{frame}{The question the room wants answered before you answer it}
+\begin{prose}
+One or two sentences that make the room want the answer.
+\end{prose}
+\note{The hook. Ask the room to commit: a show of hands, one sentence. Then advance to the payoff.}
+\end{frame}
+
+\begin{frame}{Two cases, one reveal}
+\begin{beside}[c]
+\begin{prose}
+\textbf{Case A earned more on the first component.} About \num{\primaryt{\D{reveal/gap} points}} a year.
+
+\textbf{Case B earned more on the second.} The two components offset, leaving the totals \contrastt{about equal}.
+\end{prose}
+\nextcol
+\begin{stage}
+\input{charts/stack-reveal}
+\end{stage}
+\end{beside}
+\note{Step 1 shows the first component only. Ask for the bet, then advance: the second component builds in. Let it land before speaking.}
+\end{frame}
+
+\begin{frame}{What the literature measures, and what this adds}
+\begin{claims}
+\claim{First strand.}{What it did and what it could not see.}
+\claim{Second strand.}{Where it stopped.}
+\claim{This talk.}{The object we observe that they could not.}
+\end{claims}
+\note{One slide, three strands at most. Say why each stopped where it did.}
+\end{frame}
+
+\divider[Section 1]{The first section as a claim}
+
+\begin{frame}[label=gradient]{The gradient in one picture}
+\begin{wideleft}[c]
+\fig{figs/example.pdf}
+\nextcol
+\begin{prose}
+One sentence about what the figure shows.
+
+\begin{stats}[1]
+\stat{\Dt[3]{\ladder}{0}{beta}}{unit, and the magnitude between two points the room can picture. The number is read from data/numbers.tex.}
+\end{stats}
+\end{prose}
+\source{What is plotted, the sample, the source table or figure.}
+\end{wideleft}
+\note{Replace figs/example.pdf with a source figure: sh figs/convert\_figs.sh <source-dir> <Name>. The side room on robustness opens from here.}
+\end{frame}
+
+\begin{frame}<1-3>{A line the presenter can walk along}
+\begin{beside}[c]
+\begin{prose}
+Step through the three stops. The card says what a unit at that position earns.
+
+\source{Dots are stylised around the estimated line. The slope is the source's estimate.}
+\end{prose}
+\nextcol
+\begin{stage}
+\input{charts/line-handle}
+\end{stage}
+\end{beside}
+\note{Three steps, one per stop. Stop at the two points named on the previous slide and read the card aloud. If the projector drops a step, say the three numbers.}
+\end{frame}
+
+\begin{frame}{Adding controls removes most of the slope}
+\begin{beside}[c]
+\begin{prose}
+Controls are cumulative down the rows. The last row is statistically indistinguishable from zero.
+
+\source{Coefficient on X with 95 percent intervals. Specification details. \goto{robust}{robustness}}
+\end{prose}
+\nextcol
+\begin{stage}
+\input{charts/ladder}
+\end{stage}
+\end{beside}
+\note{Read the rows top to bottom. The point is the last row, not the first.}
+\end{frame}
+
+\begin{frame}{Three numbers the room should leave with}
+\begin{stats}[3]
+\stat{\D{reveal/gap} pp}{a year, between the two cases}
+\stat[ink2]{\Dv{ladder/span}}{the span those two cases sit apart}
+\stat[contrast]{$\approx 0$}{the total gradient, statistically}
+\end{stats}
+\note{A stat-card slide breaks a run of prose-beside-figure layouts. Three numbers at most, each with the magnitude a listener can feel.}
+\end{frame}
+
+\assertion{The one sentence: the return arrives in different forms, and where you can buy decides the form}
+
+\begin{frame}{Two readings of the same fact}
+\begin{cols}
+\colhead{Reading \actorat{one}}
+\begin{prose}
+Two sentences on what it predicts.
+\end{prose}
+\nextcol
+\colhead{Reading \actorbt{two}}
+\begin{prose}
+Two sentences on what it predicts instead.
+\end{prose}
+\end{cols}
+\vspace{4mm}
+\q{The test that separates them: what we look at next.}
+\note{Name the two readings, then the one observation that tells them apart.}
+\end{frame}
+
+\begin{frame}{Three things to take away}
+\begin{claims}
+\claim{}{The first finding, with its magnitude.}
+\claim{}{The second, and why it reverses the obvious reading.}
+\claim{}{What it implies, in one sentence.}
+\end{claims}
+\note{End on the room's question, not yours.}
+\end{frame}
+
+\begin{frame}{Closing claim, the sentence they should leave with}
+\begin{prose}
+\textbf{Thank you.}
+\end{prose}
+\source{Name}\source{Affiliation}\source{email}
+\note{Leave this up during questions; the rooms are one link away.}
+\end{frame}
+
+% ---------------------------------------------------------------- appendix
+% Frames after \appendix are numbered A1, A2, … and leave the progress bar,
+% so the count ends on the closing slide.
+\appendix
+\divider{Appendix}
+
+\begin{frame}[label=robust]{A side room: the robustness a questioner will ask about}
+\figpair{figs/example.pdf}{figs/example.pdf}
+\figcap{\textbf{Left:} what. \textbf{Right:} what. Source.}
+\back{gradient}
+\note{Opened from the ladder slide. Say what changes and what does not, then go back.}
+\end{frame}
+
+% \begin{frame}[allowframebreaks]{References}\printbibliography\end{frame}
+
+\end{document}

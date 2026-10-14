@@ -1,0 +1,51 @@
+% data/numbers.tex — the single home of every number the deck uses.
+%
+% Scalars:  \defnum{path}{value}        read with \D{path} in prose, \Dv{path} in charts
+% Tables:   \pgfplotstableread[col sep=comma]{data/name.csv}\name
+%           read with \Dt{\name}{row}{col} in prose, \addplot table {\name} in charts
+%
+% Say in a comment where each number comes from (table, column, row). Prose
+% numbers that are not in a chart are transcribed from the same tables, never
+% from another slide. When a source number changes, change it here and grep
+% deck.tex for the old value.
+%
+% If an explorable already exists for this topic, transcribe its data object
+% here (and port its model functions to pgfmath) so the two never disagree.
+
+% ---- stack-reveal: two cases, each with two components of a total (units per year)
+% Source: <table and column>. Slopes are the source's; levels are stylised around sample means.
+\defnum{reveal/unit}{\% per year}
+\defnum{reveal/part/1}{first component}
+\defnum{reveal/part/2}{second component}
+\defnum{reveal/a/name}{Case A}
+\defnum{reveal/a/1}{2.8}
+\defnum{reveal/a/2}{5.8}
+\defnum{reveal/b/name}{Case B}
+\defnum{reveal/b/1}{4.1}
+\defnum{reveal/b/2}{4.5}
+\defnum{reveal/gap}{1.4}            % a/1 − b/1 rounded: the number the prose quotes
+
+% ---- line-handle: y = a + b·(x − x0) over [xmin, xmax]; the handle stops at three x values
+% Source: <table, specification>. The slope b is the estimate; a is an illustrative level.
+\defnum{line/a}{6.0}
+\defnum{line/b}{0.45}
+\defnum{line/x0}{10}
+\defnum{line/xmin}{2}
+\defnum{line/xmax}{18}
+\defnum{line/ymin}{0}
+\defnum{line/ymax}{12}
+\defnum{line/stops/1}{5}
+\defnum{line/stops/2}{10}
+\defnum{line/stops/3}{15}
+\defnum{line/xlabel}{position (units)}
+\defnum{line/ylabel}{outcome (units)}
+
+% ---- ladder: an estimate as controls are added (cumulative down the rows)
+% Columns: spec label, beta, se, sig (1 if the source's table marks it at 5 %, else 0).
+% Significance comes from the table's stars, not from rounded standard errors.
+\pgfplotstableread[col sep=comma]{data/ladder.csv}\ladder
+\defnum{ladder/xlabel}{coefficient on X (units)}
+\defnum{ladder/span}{3 to 1}       % the span between the two cases, quoted on the stats slide
+
+% ---- stylised dots for the line-handle stage (seeded draw around the line; see data/README)
+\pgfplotstableread[col sep=comma]{data/line-dots.csv}\linedots

@@ -21,6 +21,7 @@ Each skill lives in its own folder under `Skills/` with a `SKILL.md` file. Some 
 
 - `paper-version`: Policy brief, one-page, or five-page summary with a standalone HTML page.
 - `explorable-deck`: A Quarto reveal.js slide deck built around a running example and live, presenter-driven figures.
+- `explorable-beamer`: The same deck in LaTeX beamer, with TikZ stages the presenter steps through, a handout build, and a screenshot-and-log check of every page.
 
 **Utilities.**
 
@@ -33,7 +34,7 @@ These are [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code). 
 
 A global install (`~/.claude/skills/`) is available in every project. A project-local install (`.claude/skills/`) applies only to that repository. Skills are picked up the next time you start Claude Code in the target directory.
 
-The review skills, `audit-analysis`, `explain-diff`, and `paper-version` set `disable-model-invocation: true`, so they run only when you explicitly type their `/` command. Claude will never launch a multi-agent review on its own. `pdf-to-markdown` and `explorable-deck` are the exceptions: Claude may reach for them on its own when you ask it to read a PDF or to make a presentation.
+The review skills, `audit-analysis`, `explain-diff`, and `paper-version` set `disable-model-invocation: true`, so they run only when you explicitly type their `/` command. Claude will never launch a multi-agent review on its own. `pdf-to-markdown`, `explorable-deck` and `explorable-beamer` are the exceptions: Claude may reach for them on its own when you ask it to read a PDF or to make a presentation.
 
 
 ## Installation
@@ -52,7 +53,7 @@ Re-run the same line later to update.
 
 ### One skill at a time
 
-Every skill except `explorable-deck` is a single `SKILL.md` file. Replace `<name>` with the skill's folder name:
+Every skill except `explorable-deck` and `explorable-beamer` is a single `SKILL.md` file. Replace `<name>` with the skill's folder name:
 
 ```bash
 mkdir -p ~/.claude/skills/<name> && curl -o ~/.claude/skills/<name>/SKILL.md \
@@ -61,7 +62,7 @@ mkdir -p ~/.claude/skills/<name> && curl -o ~/.claude/skills/<name>/SKILL.md \
 
 For a project-local install, use `.claude/skills/<name>` as the target instead of `~/.claude/skills/<name>`.
 
-`explorable-deck` ships a template, reference notes, and helper scripts alongside its `SKILL.md`, so it needs the whole folder:
+`explorable-deck` and `explorable-beamer` ship a template, reference notes, and helper scripts alongside their `SKILL.md`, so they need the whole folder (replace the name as needed):
 
 ```bash
 git clone --depth 1 https://github.com/claesbackman/AI-research-feedback.git /tmp/airf && mkdir -p ~/.claude/skills && cp -R /tmp/airf/Skills/explorable-deck ~/.claude/skills/ && rm -rf /tmp/airf

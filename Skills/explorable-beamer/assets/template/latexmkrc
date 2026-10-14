@@ -1,0 +1,5 @@
+# latexmk settings for the deck: lualatex, output in _build/.
+$pdf_mode = 4;
+$out_dir = '_build';
+$lualatex = 'lualatex -interaction=nonstopmode -file-line-error %O %S';
+$clean_ext = 'nav snm synctex.gz';

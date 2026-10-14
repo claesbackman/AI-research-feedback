@@ -7,7 +7,7 @@ description: Build a Quarto reveal.js slide deck in the explorable-explanation s
 
 Build a Quarto reveal.js deck that teaches the way a good explorable does, but inside the frame a talk imposes: linear, timed, driven by a presenter, 1280×720 with no scrolling. The explorable's non-linear tree becomes a spine of counted slides plus an appendix of side rooms. Its playables become stages the presenter operates while talking. Its "static read must work" becomes: the printed PDF must carry the argument on its own.
 
-The sibling skill `explorable-explanations` builds the website version. This one produces a deck, and it reuses the website's models and numbers when one already exists for the topic.
+The sibling skill `explorable-explanations` builds the website version, and `explorable-beamer` builds the same deck in LaTeX beamer for a user who names Beamer, LaTeX, TeX or PDF. This one produces a Quarto deck, and it reuses the website's models and numbers when one already exists for the topic.
 
 ## What you produce
 

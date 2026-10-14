@@ -1,0 +1,25 @@
+% charts/ladder.tex — a coefficient as controls are added, one row per
+% specification, 95 percent intervals. A row the source's table does not mark
+% as significant (sig = 0 in data/ladder.csv) is drawn grey. The two addplots
+% filter the same table by sig, so rows keep their order and colour their bars.
+\pgfplotstablegetrowsof{\ladder}\pgfmathtruncatemacro{\ladderRows}{\pgfplotsretval}
+\pgfmathtruncatemacro{\ladderTop}{\ladderRows-1}
+\begin{tikzpicture}
+\begin{axis}[deckaxis, width=\chartwidth, height=\chartheight,
+  xlabel={\Dv{ladder/xlabel}},
+  ymin=-0.6, ymax=\ladderTop+0.6, y dir=reverse,
+  ytick={0,...,\ladderTop}, yticklabels from table={\ladder}{spec},
+  yticklabel style={font=\sffamily\fontsize{7}{8.5}\selectfont, color=ink},
+  y axis line style={draw=none}, ytick style={draw=none},
+  ymajorgrids=false, xmajorgrids,
+  error bars/x dir=both, error bars/x explicit, error bars/error mark=none,
+  unbounded coords=discard, filter discard warning=false,
+]
+\draw[line, line width=0.6pt] (axis cs:0,-0.6) -- (axis cs:0,\ladderTop+0.6);
+\addplot[only marks, mark=*, mark size=2.4pt, primary, error bars/error bar style={line width=0.9pt, primary}]
+  table[x=beta, y expr=\coordindex, x error expr=1.96*\thisrow{se}, restrict expr to domain={\thisrow{sig}}{1:1}] {\ladder};
+\addplot[only marks, mark=*, mark size=2.4pt, ink3, error bars/error bar style={line width=0.9pt, ink3}]
+  table[x=beta, y expr=\coordindex, x error expr=1.96*\thisrow{se}, restrict expr to domain={\thisrow{sig}}{0:0}] {\ladder};
+\end{axis}
+\end{tikzpicture}
+\stagecap{Point estimate with 95 percent interval; controls are cumulative down the rows. Grey: not distinguishable from zero in the source's table.}

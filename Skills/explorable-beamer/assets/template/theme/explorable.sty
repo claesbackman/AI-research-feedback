@@ -1,0 +1,331 @@
+% theme/explorable.sty — the explorable deck theme for beamer.
+%
+% Colour encodes the argument and nothing else. Four semantic colours, named
+% generically here. Do not rename them: the commands below and the notes
+% reference depend on the names. Instead give each an alias in the topic's
+% own words in deck.tex (\colorlet{gain}{primary}) and paint the charts with
+% the aliases, so that whoever writes a chart writes the argument into it:
+%     primary    the quantity the talk is about
+%     contrast   its counterweight or the second component
+%     actora     the first character or group
+%     actorb     the second
+% Everything else is paper and ink.
+%
+% Loaded with \usepackage{theme/explorable} from deck.tex. Needs lualatex (or
+% xelatex): the three faces are the OpenType files TeX Live ships, so the deck
+% compiles on any TeX Live without a network or a font install.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{theme/explorable}[2026/10/14 explorable beamer theme]
+
+\RequirePackage{etoolbox}
+\RequirePackage{xcolor}
+\RequirePackage{fontspec}
+\RequirePackage{unicode-math}
+\RequirePackage{tikz}
+\RequirePackage{pgfplots}
+\RequirePackage{pgfplotstable}
+\RequirePackage{booktabs}
+\RequirePackage{appendixnumberbeamer}
+\RequirePackage{pgfpages}   % for the notes build (show notes on second screen)
+\pgfplotsset{compat=1.16}
+\usetikzlibrary{calc,positioning,patterns,arrows.meta}
+
+% ---------------------------------------------------------------- tokens
+\definecolor{paper}{HTML}{FFFFFF}
+\definecolor{paper2}{HTML}{F7F7F7}
+\definecolor{paper3}{HTML}{ECECEC}
+\definecolor{ink}{HTML}{1C2224}
+\definecolor{ink2}{HTML}{4B5457}
+\definecolor{ink3}{HTML}{667074}
+\definecolor{line}{HTML}{C9CEC6}
+\definecolor{primary}{HTML}{C4452A}
+\definecolor{contrast}{HTML}{128F78}
+\definecolor{actora}{HTML}{B8760A}
+\definecolor{actorb}{HTML}{3A63B8}
+\definecolor{primarysoft}{HTML}{F2D9D2}
+\definecolor{contrastsoft}{HTML}{CFE9E2}
+\definecolor{actorasoft}{HTML}{F1E3C6}
+\definecolor{actorbsoft}{HTML}{D6E0F4}
+\colorlet{focus}{actorb}
+
+% ---------------------------------------------------------------- faces
+% A display grotesque for titles and labels, a serif narrator for body text,
+% a mono for numbers. Loaded by file name from TeX Live; if a file is missing
+% (an unusual TeX install) the system faces named here take over.
+\defaultfontfeatures{Ligatures=TeX}
+\IfFontExistsTF{FiraSans-Regular.otf}{%
+  \setsansfont{FiraSans}[Extension=.otf, UprightFont=*-Regular, BoldFont=*-ExtraBold,
+    ItalicFont=*-Italic, BoldItalicFont=*-ExtraBoldItalic]}{%
+  \setsansfont{Helvetica Neue}}
+\IfFontExistsTF{LibertinusSerif-Regular.otf}{%
+  \setmainfont{LibertinusSerif}[Extension=.otf, UprightFont=*-Regular, BoldFont=*-Bold,
+    ItalicFont=*-Italic, BoldItalicFont=*-BoldItalic]}{%
+  \setmainfont{Georgia}}
+\IfFontExistsTF{IBMPlexMono-Regular.otf}{%
+  \setmonofont{IBMPlexMono}[Extension=.otf, UprightFont=*-Regular, BoldFont=*-SemiBold,
+    ItalicFont=*-Italic, BoldItalicFont=*-SemiBoldItalic, Scale=MatchLowercase]}{%
+  \setmonofont{Menlo}[Scale=MatchLowercase]}
+\IfFontExistsTF{LibertinusMath-Regular.otf}{\setmathfont{LibertinusMath-Regular.otf}}{}
+% Numbers that pgf prints (tick labels, \D, \Dt) would be set in math mode, in
+% the math font. The deck sets them as text in the current face instead, so a
+% chart's numbers match the labels around them and a stat card's number is in
+% the display face, with a real minus sign. Numbers are therefore always
+% printed in fixed notation (sci notation needs math mode).
+\pgfkeys{/pgf/number format/fixed, /pgf/number format/precision=4}
+\def\explorable@textnum#1#2\explorable@end{\if-#1\symbol{"2212}\else#1\fi#2}
+\renewcommand{\pgfutilensuremath}[1]{\ifmmode#1\else\expandafter\explorable@textnum#1\explorable@end\fi}
+\pdfstringdefDisableCommands{\let\translate\@firstofone}
+
+% ---------------------------------------------------------------- beamer
+\mode<presentation>
+\usefonttheme{serif}
+\usefonttheme{professionalfonts}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{headline}{}
+\setbeamersize{text margin left=10mm, text margin right=10mm}
+\setlength{\parskip}{1.1ex}
+
+\setbeamercolor{normal text}{fg=ink, bg=paper}
+\setbeamercolor{structure}{fg=ink}
+\setbeamercolor{frametitle}{fg=ink, bg=}
+\setbeamercolor{title}{fg=ink}
+\setbeamercolor{subtitle}{fg=ink2}
+\setbeamercolor{author}{fg=ink}
+\setbeamercolor{institute}{fg=ink3}
+\setbeamercolor{date}{fg=ink3}
+\setbeamercolor{item}{fg=ink3}
+\setbeamercolor{enumerate item}{fg=ink3}
+\setbeamercolor{alerted text}{fg=primary}
+\setbeamercolor{footline}{fg=ink3}
+\setbeamercolor{note page}{fg=ink, bg=paper2}
+
+\setbeamerfont{normal text}{size=\fontsize{9}{12.5}}
+\setbeamerfont{frametitle}{family=\sffamily, series=\bfseries, size=\fontsize{15}{17}}
+\setbeamerfont{title}{family=\sffamily, series=\bfseries, size=\fontsize{24}{27}}
+\setbeamerfont{subtitle}{family=\rmfamily, series=\mdseries, size=\fontsize{11}{14}}
+\setbeamerfont{author}{family=\rmfamily, size=\fontsize{10}{13}}
+\setbeamerfont{institute}{family=\sffamily, size=\fontsize{8}{11}}
+\setbeamerfont{date}{family=\sffamily, size=\fontsize{8}{11}}
+\setbeamerfont{footline}{family=\ttfamily, size=\fontsize{6}{7}}
+\setbeamerfont{note page}{family=\rmfamily, size=\fontsize{10}{14}}
+
+\setbeamertemplate{itemize item}{\color{ink3}\raise0.2ex\hbox{\rule{0.8ex}{0.8ex}}}
+\setbeamertemplate{itemize subitem}{\color{ink3}\raise0.4ex\hbox{\rule{0.6ex}{0.6ex}}}
+\setbeamertemplate{enumerate item}{\sffamily\bfseries\color{ink3}\insertenumlabel}
+\setbeamertemplate{caption}{\insertcaption}
+\setlength{\leftmargini}{1.6em}
+
+% Frame title: display face, left, with room above so the title sits where
+% the eye expects it on every slide.
+\setbeamertemplate{frametitle}{%
+  \vspace*{6mm}%
+  {\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle\par}%
+  \ifx\insertframesubtitle\@empty\else
+    {\vspace{0.5mm}\rmfamily\fontsize{10}{12}\selectfont\color{ink2}\insertframesubtitle\par}\fi
+  \vspace{2mm}%
+}
+
+% Footline: an 8 mm band. The lower 5 mm carry the frame number (right) and a
+% hairline progress bar along the bottom edge; the upper 3 mm stay empty, and
+% shoot.py treats ink there as content touching the bottom of the frame.
+\newlength{\footlineheight}\setlength{\footlineheight}{8mm}
+\def\explorable@inappendix{0}
+\apptocmd{\appendix}{\gdef\explorable@inappendix{1}}{}{}
+\setbeamertemplate{footline}{%
+  \begin{tikzpicture}[overlay, remember picture]
+    \useasboundingbox (0,0) rectangle (\paperwidth,\footlineheight);
+    \ifnum\explorable@inappendix=0
+      \fill[paper3] (0,0) rectangle (\paperwidth,0.6pt);
+      \pgfmathsetmacro{\explorable@progress}{\insertframenumber/max(\inserttotalframenumber,1)}%
+      \fill[primary] (0,0) rectangle (\explorable@progress*\paperwidth,0.6pt);
+      \node[anchor=south east, inner sep=0, font=\usebeamerfont{footline}, text=ink3]
+        at (\paperwidth-10mm, 2.2mm) {\insertframenumber\,/\,\inserttotalframenumber};
+    \else
+      \node[anchor=south east, inner sep=0, font=\usebeamerfont{footline}, text=ink3]
+        at (\paperwidth-10mm, 2.2mm) {A\,\insertframenumber};
+    \fi
+  \end{tikzpicture}%
+}
+
+% Title page: left aligned, eyebrow (subtitle = venue, month year) above the title.
+\setbeamertemplate{title page}{%
+  \vspace*{14mm}%
+  {\eyebrow{\insertsubtitle}\par}\vspace{3mm}%
+  {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}\vspace{6mm}%
+  {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}\vspace{1.5mm}%
+  {\usebeamerfont{institute}\usebeamercolor[fg]{institute}\insertinstitute\par}%
+  \ifx\insertdate\@empty\else{\vspace{1mm}\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}\fi
+}
+
+% Notes page: a plain serif page the presenter reads.
+\setbeamertemplate{note page}{%
+  \vspace*{8mm}{\sffamily\bfseries\fontsize{11}{13}\selectfont\color{ink3}\insertframenumber\quad\insertframetitle\par}
+  \vspace{3mm}{\usebeamerfont{note page}\usebeamercolor[fg]{note page}\insertnote\par}}
+\ifdefined\NOTES\setbeameroption{show notes on second screen=right}\fi
+\mode<handout>{\providecommand{\HANDOUT}{}}
+
+% ---------------------------------------------------------------- inline roles
+\newcommand{\eyebrow}[1]{{\sffamily\bfseries\fontsize{7}{9}\selectfont\color{ink3}\addfontfeature{LetterSpace=10}\MakeUppercase{#1}}}
+\newcommand{\q}[1]{{\par\sffamily\bfseries\fontsize{13}{16}\selectfont\color{ink}#1\par}}
+\newcommand{\source}[1]{{\par\vspace{1.2mm}\sffamily\fontsize{6.5}{8.5}\selectfont\color{ink3}#1\par}}
+\newcommand{\figcap}[1]{{\par\vspace{1mm}\centering\rmfamily\fontsize{8}{10.5}\selectfont\color{ink2}#1\par}}
+\newcommand{\stagecap}[1]{{\par\vspace{0.8mm}\centering\rmfamily\fontsize{7.5}{9.5}\selectfont\color{ink3}#1\par}}
+\newcommand{\num}[1]{{\ttfamily #1}}
+\newcommand{\colhead}[1]{{\par\sffamily\bfseries\fontsize{9}{11}\selectfont\color{ink}#1\par\nobreak\vspace{-0.6ex}{\color{line}\rule{\linewidth}{0.4pt}}\par\vspace{0.6ex}}}
+\newcommand{\ph}[1]{{\par\sffamily\bfseries\fontsize{9}{11}\selectfont\color{ink}#1\par}}
+\newcommand{\muted}[1]{{\color{ink3}#1}}
+\newcommand{\aside}[1]{{\par\noindent{\color{line}\rule[-0.3ex]{1pt}{1.1em}}\hspace{1.2ex}\begin{minipage}[t]{\dimexpr\linewidth-1pt-1.2ex}\color{ink2}\fontsize{8}{11}\selectfont #1\end{minipage}\par}}
+\newcommand{\kbd}[1]{{\fboxsep=1.5pt\fboxrule=0.4pt\fcolorbox{line}{paper2}{\ttfamily\fontsize{7}{8}\selectfont #1}}}
+\newcommand{\primaryt}[1]{\textcolor{primary}{\bfseries #1}}
+\newcommand{\contrastt}[1]{\textcolor{contrast}{\bfseries #1}}
+\newcommand{\actorat}[1]{\textcolor{actora}{\bfseries #1}}
+\newcommand{\actorbt}[1]{\textcolor{actorb}{\bfseries #1}}
+\newcommand{\goto}[2]{\hyperlink{#1}{\textcolor{ink2}{#2}\,{\sffamily\color{ink3}\symbol{"2197}}}}
+\newcommand{\back}[1]{\hyperlink{#1}{{\sffamily\fontsize{7}{9}\selectfont\color{ink3}\symbol{"2190}\ back to the talk}}}
+
+% ---------------------------------------------------------------- layouts
+% beside:   prose (36 %) beside a stage or figure (60 %)      \begin{beside} … \nextcol … \end{beside}
+% wideleft: figure (60 %) beside prose (36 %)
+% even:     two equal columns;  cols: two equal columns with a hairline between
+% The columns are top aligned; \begin{beside}[c] centres them vertically.
+% (Not `split`: amsmath, which beamer loads, owns that name.)
+\newcommand{\nextcol}{}
+\newenvironment{beside}[1][T]{\begin{columns}[#1,onlytextwidth]\column{0.36\textwidth}\def\nextcol{\column{0.60\textwidth}}}{\end{columns}}
+\newenvironment{wideleft}[1][T]{\begin{columns}[#1,onlytextwidth]\column{0.60\textwidth}\def\nextcol{\column{0.36\textwidth}}}{\end{columns}}
+\newenvironment{even}[1][T]{\begin{columns}[#1,onlytextwidth]\column{0.48\textwidth}\def\nextcol{\column{0.48\textwidth}}}{\end{columns}}
+\newlength{\colsrule}\setlength{\colsrule}{0.4\textheight}   % height of the hairline in `cols`; set it per frame when the columns are short
+\newenvironment{cols}[1][T]{\begin{columns}[#1,onlytextwidth]\column{0.46\textwidth}\def\nextcol{\column{0.04\textwidth}\centering{\color{line}\rule{0.4pt}{\colsrule}}\column{0.46\textwidth}}}{\end{columns}}
+\newenvironment{prose}{\par\rmfamily\usebeamerfont{normal text}\color{ink}}{\par}
+
+% The stage: a fixed-height box a chart fills. Fixed height matters: the box
+% must not change size between overlay steps, or the slide reflows on stage.
+%   \begin{stage}            50 mm       beside prose
+%   \begin{stage}[tall]      56 mm       full width, figure is the point
+%   \begin{stage}[short]     42 mm       under prose (stack layout)
+\newlength{\stageheight}\setlength{\stageheight}{50mm}
+\newlength{\stagetall}\setlength{\stagetall}{56mm}
+\newlength{\stageshort}\setlength{\stageshort}{42mm}
+\newlength{\stage@h}
+\newenvironment{stage}[1][]{%
+  \setlength{\stage@h}{\stageheight}%
+  \ifstrequal{#1}{tall}{\setlength{\stage@h}{\stagetall}}{}%
+  \ifstrequal{#1}{short}{\setlength{\stage@h}{\stageshort}}{}%
+  \par\noindent\begin{minipage}[c][\stage@h][c]{\linewidth}\centering}{\end{minipage}\par}
+% Chart geometry inside a stage, for pgfplots: width and height of the whole
+% axis including labels. Defaults fit the split layout; set them per chart.
+\newlength{\chartwidth}\setlength{\chartwidth}{80mm}
+\newlength{\chartheight}\setlength{\chartheight}{42mm}
+
+% Stepped stages. A stage that changes across overlays declares its step count
+% with \stagesteps{N} and reads \step (1..N). Its frame carries <1-N>. In
+% handout mode every overlay shows at once, so \step returns N there: the
+% printed deck shows the finished state, as the static read requires.
+\def\stage@steps{1}
+\newcommand{\stagesteps}[1]{\def\stage@steps{#1}}
+\newcommand{\step}{\ifdefined\HANDOUT\stage@steps\else\the\beamer@slideinframe\fi}
+
+% Overlay-aware TikZ/pgfplots styles: the element keeps its space and turns
+% invisible, so axes never move between steps.
+%   \addplot[visible on=<2->] …     \node[visible on=<3>] …
+\tikzset{
+  invisible/.style={opacity=0, text opacity=0},
+  visible on/.style={alt={#1{}{invisible}}},
+  alt/.code args={<#1>#2#3}{\alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}}},
+}
+
+% Figures from the source: PDF or PNG in figs/, placed at a fixed height so
+% the width follows. \fig{file}, \fig[tall]{file}, \figpair{a}{b}.
+\newlength{\figheight}\setlength{\figheight}{48mm}
+\newlength{\figtall}\setlength{\figtall}{56mm}
+\newlength{\figpairheight}\setlength{\figpairheight}{40mm}
+\newcommand{\fig}[2][]{{\par\centering
+  \ifstrequal{#1}{tall}{\includegraphics[height=\figtall,width=\linewidth,keepaspectratio]{#2}}%
+                       {\includegraphics[height=\figheight,width=\linewidth,keepaspectratio]{#2}}\par}}
+\newcommand{\figpair}[2]{{\par\centering
+  \includegraphics[height=\figpairheight,width=0.48\linewidth,keepaspectratio]{#1}\hfill
+  \includegraphics[height=\figpairheight,width=0.48\linewidth,keepaspectratio]{#2}\par}}
+
+% Numbered claims (literature, conclusion):  \begin{claims} \claim{Lead.}{text} \end{claims}
+\newenvironment{claims}{\begin{enumerate}\setlength{\itemsep}{1.4ex}}{\end{enumerate}}
+\newcommand{\claim}[2]{\item {\sffamily\bfseries #1} #2}
+
+% Stat cards:  \begin{stats}[3] \stat{0.017}{label} \stat[contrast]{4.5}{label} \end{stats}
+\newlength{\statwidth}
+\newenvironment{stats}[1][3]{\par\setlength{\statwidth}{\dimexpr\linewidth/#1-3mm\relax}\noindent}{\par}
+\newcommand{\stat}[3][ink]{\begin{minipage}[t]{\statwidth}
+  {\sffamily\bfseries\fontsize{26}{28}\selectfont\color{#1}#2\par}\vspace{1mm}
+  {\raggedright\rmfamily\fontsize{8.5}{11}\selectfont\color{ink2}#3\par}\end{minipage}\hfill}
+\newcommand{\bignum}[2]{{\par\centering{\sffamily\bfseries\fontsize{34}{36}\selectfont\color{ink}#1}\par\vspace{0.5mm}{\sffamily\fontsize{7.5}{9}\selectfont\color{ink3}#2}\par}}
+
+% A bordered card with a coloured left edge:  \begin{panel}[actora] … \end{panel}
+\newsavebox{\panel@box}
+\newenvironment{panel}[1][line]{\par\noindent\def\panel@color{#1}\begin{lrbox}{\panel@box}\begin{minipage}{\dimexpr\linewidth-6mm-1.5pt\relax}\fontsize{8.5}{11.5}\selectfont}%
+  {\end{minipage}\end{lrbox}\noindent\colorbox{paper2}{\color{\panel@color}\rule[-\dp\panel@box]{1.5pt}{\dimexpr\ht\panel@box+\dp\panel@box\relax}\hspace{2.5mm}\usebox{\panel@box}\hspace{2.5mm}}\par}
+
+% Legend chips and swatches:  \swatch{primary}~label
+\newcommand{\swatch}[1]{\leavevmode{\color{#1}\raise0.1ex\hbox{\rule{1.6ex}{1.6ex}}}}
+\newcommand{\legend}[1]{{\par\centering\sffamily\fontsize{7}{9}\selectfont\color{ink2}#1\par}}
+
+% Divider and single-assertion slides.
+\newcommand{\divider}[2][]{\section{#2}\begin{frame}[plain]\vspace*{10mm}%
+  \ifstrempty{#1}{}{\eyebrow{#1}\par\vspace{3mm}}%
+  {\sffamily\bfseries\fontsize{26}{30}\selectfont\color{ink}#2\par}\vfill\end{frame}}
+\newcommand{\assertion}[1]{\begin{frame}[plain]\vspace*{10mm}%
+  {\sffamily\bfseries\fontsize{20}{24}\selectfont\color{ink}#1\par}\vfill\end{frame}}
+
+% Tables in the display face at a small size with hairlines.
+\newenvironment{decktable}{\par\centering\sffamily\fontsize{7.5}{10}\selectfont\renewcommand{\arraystretch}{1.25}}{\par}
+
+% ---------------------------------------------------------------- numbers
+% data/numbers.tex is the single home of every number a chart or a sentence
+% uses. \defnum{path}{value} stores one; \D{path} prints it in prose and
+% \Dv{path} expands to it inside TikZ and pgfmath. \D[2]{path} rounds to two
+% decimals, zero-filled. An undefined key prints ?? in the primary colour and writes
+% "DATA: undefined key" to the log, which shoot.py reports.
+\newcommand{\defnum}[2]{\pgfkeyssetvalue{/data/#1}{#2}}
+\newcommand{\Dv}[1]{\pgfkeysvalueof{/data/#1}}
+\newcommand{\D}[2][]{\pgfkeysifdefined{/data/#2}%
+  {\ifstrempty{#1}%
+    {\pgfkeysgetvalue{/data/#2}{\explorable@tmp}\expandafter\explorable@textnum\explorable@tmp{}\explorable@end}%
+    {\pgfmathprintnumber[fixed, fixed zerofill, precision=#1]{\pgfkeysvalueof{/data/#2}}}}%
+  {\textcolor{primary}{??}\PackageWarning{explorable}{DATA: undefined key #2}}}
+% A cell of a table read with \pgfplotstableread: \Dt{\ladder}{0}{beta}, \Dt[3]{\ladder}{0}{beta}.
+% \Dt is not expandable (pgfplotstable looks the cell up), so it cannot sit inside a
+% coordinate or a pgfmath expression. For a chart, copy the cell into a macro first:
+%   \Dtlet{\seA}{\ladder}{0}{se}   then   coordinates {(1,\seA)}
+\newcommand{\Dt}[4][]{\pgfplotstablegetelem{#3}{#4}\of#2%
+  \ifstrempty{#1}{\expandafter\explorable@textnum\pgfplotsretval{}\explorable@end}{\pgfmathprintnumber[fixed, fixed zerofill, precision=#1]{\pgfplotsretval}}}
+\newcommand{\Dtlet}[4]{\pgfplotstablegetelem{#3}{#4}\of#2\let#1\pgfplotsretval}
+
+% ---------------------------------------------------------------- charts
+% The axis style every stage uses. Grey axes and ticks, display-face labels,
+% no box, a soft horizontal grid, and lines heavy enough for the back row.
+\pgfplotsset{
+  deckaxis/.style={
+    width=\chartwidth, height=\chartheight,
+    axis lines=left, axis line style={line, line width=0.6pt},
+    tick style={line, line width=0.6pt}, tick align=outside,
+    ticklabel style={font=\sffamily\fontsize{6.5}{8}\selectfont, color=ink3},
+    label style={font=\sffamily\fontsize{6.5}{8}\selectfont, color=ink2},
+    xlabel style={at={(xticklabel cs:1)}, anchor=north east, yshift=-1mm},
+    scaled ticks=false, /pgf/number format/fixed,
+    ylabel style={at={(0,1)}, anchor=south west, rotate=-90, xshift=1mm, yshift=-1mm},
+    ymajorgrids, grid style={paper3},
+    every axis plot/.append style={line width=1.3pt},
+    legend style={draw=none, fill=none, font=\sffamily\fontsize{6.5}{8}\selectfont, legend cell align=left},
+    clip=false,
+  },
+}
+% Node styles (TikZ path, so they work inside and outside an axis). A card is
+% `overlay`: it does not count towards the picture's size, so a card that hangs
+% outside the axis on one step cannot shift the whole stage sideways.
+\tikzset{
+  card/.style={overlay, font=\sffamily\fontsize{6.5}{8}\selectfont, text=ink, fill=paper, draw=line, rounded corners=1.5pt, inner sep=3pt, align=left},
+  handle/.style={circle, draw=paper, fill=primary, line width=1pt, inner sep=0, minimum size=7pt},
+  datalabel/.style={font=\sffamily\bfseries\fontsize{6.5}{8}\selectfont, text=ink2, inner sep=1.5pt},
+  mech box/.style={draw=line, fill=paper2, rounded corners=1.5pt, inner sep=5pt, font=\sffamily\fontsize{8}{10}\selectfont, text=ink, align=center},
+  mech arrow/.style={-{Stealth[length=5pt]}, line width=1pt, ink2},
+}
+
+\mode<all>
+\endinput

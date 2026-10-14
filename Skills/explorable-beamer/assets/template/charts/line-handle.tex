@@ -1,0 +1,20 @@
+% charts/line-handle.tex — a fitted line with a handle the presenter walks
+% along. Three stops, one per overlay step: \stagesteps{3} here, <1-3> on the
+% frame. Step 1 is where the picture is most interesting; in the handout the
+% handle sits at the last stop. Numbers: data/numbers.tex, line/*.
+\stagesteps{3}
+\pgfmathsetmacro{\handleX}{\Dv{line/stops/\step}}
+\pgfmathsetmacro{\handleY}{\Dv{line/a}+\Dv{line/b}*(\handleX-\Dv{line/x0})}
+\begin{tikzpicture}
+\begin{axis}[deckaxis, width=\chartwidth, height=\chartheight,
+  xmin=\Dv{line/xmin}, xmax=\Dv{line/xmax}, ymin=\Dv{line/ymin}, ymax=\Dv{line/ymax},
+  xlabel={\Dv{line/xlabel}}, ylabel={\Dv{line/ylabel}},
+]
+\addplot[only marks, mark=*, mark size=1.1pt, mark options={fill=line, draw=none}] table[x=x, y=y] {\linedots};
+\addplot[primary, domain=\Dv{line/xmin}:\Dv{line/xmax}, samples=2] {\Dv{line/a}+\Dv{line/b}*(x-\Dv{line/x0})};
+\draw[line, dashed, line width=0.5pt] (axis cs:\handleX,\Dv{line/ymin}) -- (axis cs:\handleX,\handleY);
+\node[handle] (h) at (axis cs:\handleX,\handleY) {};
+\node[card, above=2.5mm of h] {at \pgfmathprintnumber[fixed,precision=0]{\handleX}: \textbf{\pgfmathprintnumber[fixed,precision=1]{\handleY}} units};
+\end{axis}
+\end{tikzpicture}
+\stagecap{Dots are stylised around the estimated line. The slope (\D[2]{line/b} per unit) is the source's estimate; the level is illustrative.}

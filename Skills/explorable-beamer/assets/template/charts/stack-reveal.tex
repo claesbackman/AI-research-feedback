@@ -1,0 +1,29 @@
+% charts/stack-reveal.tex — two cases, two components each. The second
+% component builds in on the second overlay: the payoff after a bet.
+% The frame needs no overlay spec of its own; visible on=<2-> creates step 2.
+% Numbers: data/numbers.tex, reveal/*.
+\pgfmathsetmacro{\revealTotA}{\Dv{reveal/a/1}+\Dv{reveal/a/2}}
+\pgfmathsetmacro{\revealTotB}{\Dv{reveal/b/1}+\Dv{reveal/b/2}}
+\begin{tikzpicture}
+\begin{axis}[deckaxis, width=72mm, height=44mm,
+  ybar stacked, bar width=16mm, enlarge x limits=false,
+  xmin=0.4, xmax=2.6, xtick={1,2}, xticklabels={\Dv{reveal/a/name}, \Dv{reveal/b/name}},
+  xticklabel style={font=\sffamily\bfseries\fontsize{7.5}{9}\selectfont, color=ink},
+  ymin=0, ymax=11.5, ytick={0,4,8}, ylabel={\Dv{reveal/unit}},
+  x axis line style={draw=none}, xtick style={draw=none},
+]
+% first component, solid
+\addplot[fill=actora, draw=none] coordinates {(1,\Dv{reveal/a/1}) (2,0)};
+\addplot[fill=actorb, draw=none] coordinates {(1,0) (2,\Dv{reveal/b/1})};
+% second component, hatched, builds in on step 2
+\addplot[pattern=north east lines, pattern color=actora, draw=actora, line width=0.6pt, visible on=<2->] coordinates {(1,\Dv{reveal/a/2}) (2,0)};
+\addplot[pattern=north east lines, pattern color=actorb, draw=actorb, line width=0.6pt, visible on=<2->] coordinates {(1,0) (2,\Dv{reveal/b/2})};
+% labels: the first component on step 1, the totals on step 2
+\node[datalabel, anchor=south, text=actora, visible on=<1>] at (axis cs:1,\Dv{reveal/a/1}) {\Dv{reveal/a/1}};
+\node[datalabel, anchor=south, text=actorb, visible on=<1>] at (axis cs:2,\Dv{reveal/b/1}) {\Dv{reveal/b/1}};
+\node[datalabel, anchor=south, text=actora, visible on=<2->] at (axis cs:1,\revealTotA) {\pgfmathprintnumber[fixed,precision=1]{\revealTotA}};
+\node[datalabel, anchor=south, text=actorb, visible on=<2->] at (axis cs:2,\revealTotB) {\pgfmathprintnumber[fixed,precision=1]{\revealTotB}};
+\end{axis}
+\end{tikzpicture}
+\legend{\swatch{ink2}~\Dv{reveal/part/1}\qquad{\tikz\fill[pattern=north east lines, pattern color=ink2] (0,0) rectangle (1.6ex,1.6ex);}~\Dv{reveal/part/2}}
+\stagecap{Slopes are the source's estimates; levels are stylised around sample averages (\Dv{reveal/unit}).}
