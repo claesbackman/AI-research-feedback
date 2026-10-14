@@ -1,35 +1,46 @@
-# Using AI to get feedback on your research
+# AI tools for research
 
-A collection of [Claude Code](https://claude.ai/code) skills for reviewing and understanding academic research. This tool was developed by [Claes Bäckman](https://claesbackman.com).
+A collection of [Claude Code](https://claude.ai/code) skills for academic research. Some give you feedback on a paper, a pre-analysis plan, a grant proposal, or the code behind a result. Others help you communicate your results, by turning a paper into a policy brief or a slide deck. A few are utilities that make the rest easier to use. The tools were developed by [Claes Bäckman](https://claesbackman.com). For a broader introduction to using AI in research, including how these skills fit into a workflow, see the [AI workshop](https://claesbackman.com/ai_workshop/index.html) page.
 
 
 ## Skills in this repo
 
-Each skill lives in its own folder containing a `SKILL.md` file:
+Each skill lives in its own folder under `Skills/` with a `SKILL.md` file. Some skills also ship templates and helper scripts in the same folder.
 
-- `Skills/review-paper/SKILL.md`: Full 8-agent referee-style paper review.
-- `Skills/review-paper-light/SKILL.md`: Fast 2-agent paper check.
-- `Skills/review-paper-checks/SKILL.md`: Fast 3-agent mechanical check — spelling, internal consistency, unsupported claims.
-- `Skills/review-paper-code/SKILL.md`: Paper–code reproducibility and alignment review.
-- `Skills/review-pap/SKILL.md`: Pre-analysis plan review.
-- `Skills/review-grant/SKILL.md`: Grant proposal review.
-- `Skills/explain-diff/SKILL.md`: Explain a code change as an offline HTML page with a quiz.
-- `Skills/audit-analysis/SKILL.md`: Adversarial audit of changed analysis code, run by an isolated subagent.
-- `Skills/paper-version/SKILL.md`: Turn a LaTeX paper into a policy brief, one-page, or five-page summary with a standalone HTML page.
-- `Skills/pdf-to-markdown/SKILL.md`: Convert a PDF to readable markdown, trimmed at the references.
+**Feedback on your writing.** A family of review skills that read a document and write a structured report with findings you can act on. They cover a full referee-style review of a paper, a quick check of the contribution and identification, a mechanical check of spelling and internal consistency, a review of a pre-analysis plan, and a review of a grant proposal.
+
+- `review-paper`, `review-paper-light`, `review-paper-checks`, `review-pap`, `review-grant`
+
+**Feedback on your code.** Skills that check whether the analysis code does what the paper says it does, hunt for errors in a recent change, or explain a change well enough that a coauthor could defend it.
+
+- `review-paper-code`: Paper–code reproducibility and alignment review.
+- `audit-analysis`: Adversarial audit of changed analysis code, run by an isolated subagent.
+- `explain-diff`: Explain a code change as an offline HTML page with a quiz.
+
+**Communicating your results.** Skills that turn a finished paper into something for a different audience.
+
+- `paper-version`: Policy brief, one-page, or five-page summary with a standalone HTML page.
+- `explorable-deck`: A Quarto reveal.js slide deck built around a running example and live, presenter-driven figures.
+
+**Utilities.**
+
+- `pdf-to-markdown`: Convert a PDF to readable markdown, trimmed at the references.
 
 
 ## How the skills work
 
-These are [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code). Install one into `~/.claude/skills/<name>/SKILL.md` and invoke it by typing `/<name>` (for example, `/review-paper`) inside Claude Code. The per-skill installation commands below create the required folder and download the `SKILL.md` for you.
+These are [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code). A skill is a folder containing a `SKILL.md` file, installed under `~/.claude/skills/<name>/` and invoked by typing `/<name>` (for example, `/review-paper`) inside Claude Code.
 
 A global install (`~/.claude/skills/`) is available in every project. A project-local install (`.claude/skills/`) applies only to that repository. Skills are picked up the next time you start Claude Code in the target directory.
 
-The review skills, `audit-analysis`, and `paper-version` set `disable-model-invocation: true`, so they run only when you explicitly type their `/` command. Claude will never launch a multi-agent review on its own. `pdf-to-markdown` is the exception: Claude may also reach for it when you ask it to read a PDF.
+The review skills, `audit-analysis`, `explain-diff`, and `paper-version` set `disable-model-invocation: true`, so they run only when you explicitly type their `/` command. Claude will never launch a multi-agent review on its own. `pdf-to-markdown` and `explorable-deck` are the exceptions: Claude may reach for them on its own when you ask it to read a PDF or to make a presentation.
 
-## Install everything at once
 
-**Without a terminal (Windows Explorer, macOS Finder).** [Download the repository as a zip](https://github.com/claesbackman/AI-research-feedback/archive/refs/heads/main.zip), unzip it, and copy each folder inside `Skills/` (for example `review-paper`, `review-paper-light`) into `~/.claude/skills/`. That is a hidden folder in your user folder — `C:\Users\you\.claude\skills` on Windows, `/Users/you/.claude/skills` on macOS. Restart VS Code or Claude Code afterwards.
+## Installation
+
+### Everything at once
+
+**Without a terminal (Windows Explorer, macOS Finder).** [Download the repository as a zip](https://github.com/claesbackman/AI-research-feedback/archive/refs/heads/main.zip), unzip it, and copy each folder inside `Skills/` (for example `review-paper`, `explorable-deck`) into `~/.claude/skills/`. That is a hidden folder in your user folder, `C:\Users\you\.claude\skills` on Windows and `/Users/you/.claude/skills` on macOS. Restart VS Code or Claude Code afterwards.
 
 **With a terminal (macOS, Linux, WSL).** One line installs every skill globally:
 
@@ -37,158 +48,70 @@ The review skills, `audit-analysis`, and `paper-version` set `disable-model-invo
 git clone --depth 1 https://github.com/claesbackman/AI-research-feedback.git /tmp/airf && mkdir -p ~/.claude/skills && cp -R /tmp/airf/Skills/. ~/.claude/skills/ && rm -rf /tmp/airf
 ```
 
-Re-run the same line later to update. The per-skill `curl` commands below install one skill at a time.
+Re-run the same line later to update.
+
+### One skill at a time
+
+Every skill except `explorable-deck` is a single `SKILL.md` file. Replace `<name>` with the skill's folder name:
+
+```bash
+mkdir -p ~/.claude/skills/<name> && curl -o ~/.claude/skills/<name>/SKILL.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/<name>/SKILL.md
+```
+
+For a project-local install, use `.claude/skills/<name>` as the target instead of `~/.claude/skills/<name>`.
+
+`explorable-deck` ships a template, reference notes, and helper scripts alongside its `SKILL.md`, so it needs the whole folder:
+
+```bash
+git clone --depth 1 https://github.com/claesbackman/AI-research-feedback.git /tmp/airf && mkdir -p ~/.claude/skills && cp -R /tmp/airf/Skills/explorable-deck ~/.claude/skills/ && rm -rf /tmp/airf
+```
 
 > **Already installed these as slash commands?** Custom commands and skills have merged in Claude Code, so any existing `~/.claude/commands/<name>.md` file keeps working and still provides `/<name>`. To avoid two definitions of the same command, delete the old `~/.claude/commands/<name>.md` file after installing the skill version.
 
 
-## Skills
+## Feedback on your writing: the review skills
 
-### `review-paper` — Pre-Submission Referee Report
+The review skills share one design. Each launches several specialised review agents in parallel, each with its own focus such as writing quality, internal consistency, unsupported claims, identification, or fit to a target journal, registry, or funder. The findings are consolidated into a single prioritised report saved under `reviews/` in the project folder, with the date in the filename and `-v2`, `-v3`, and so on appended when a file already exists. Reports live in their own subfolder so they cannot contaminate future runs. The skills read only the document's own source files and ignore old drafts, response letters, and previous review reports.
 
-Runs a rigorous pre-submission review of an academic paper, simulating the scrutiny of a specific journal's editorial board. Eight specialized review agents run in parallel and consolidate their findings into a single structured report. The review only reads the paper's own source files (the main .tex file and everything it includes) and ignores old drafts, response letters, and previous review reports in the same folder.
+| Command | What it does | Agents | Report |
+|---|---|---|---|
+| `/review-paper` | Full referee-style review of a paper, including a steelman and an attack on the contribution grounded in the paper's own bibliography | 8 | `PRE_SUBMISSION_REVIEW_[date].md` |
+| `/review-paper-light` | Fast check of contribution, identification, and causal overclaiming, for quick iteration | 2 | `QUICK_REVIEW_[date].md` |
+| `/review-paper-checks` | Mechanical check of spelling, internal consistency, cross-references, and unsupported claims, with no editorial judgment. Offers to apply the unambiguous fixes to the `.tex` files afterwards | 3 | `PAPER_CHECK_[date].md` |
+| `/review-pap` | Pre-analysis plan review covering specification completeness, identification, statistical analysis, and implementation | 6 | `PAP_REVIEW_[date].md` |
+| `/review-grant` | Grant proposal panel review covering significance, innovation, design, feasibility, budget logic, and team | 6 | `GRANT_PROPOSAL_REVIEW_[date].md` |
 
-**What it reviews:**
-
-| Agent | Focus |
-|---|---|
-| 1 | Spelling, grammar, and academic style |
-| 2 | Internal consistency and cross-reference verification |
-| 3 | Unsupported claims and identification integrity |
-| 4 | Mathematics, equations, and notation |
-| 5 | Tables, figures, and their documentation |
-| 6 | Referee assessment (identification, analyses, positioning, journal fit) |
-| 7 | Contribution advocate (steelman, grounded in the paper's own bibliography) |
-| 8 | Contribution skeptic (attack, grounded in the paper's own bibliography) |
-
-Agents 7 and 8 independently rate the central contribution from opposite directions. The report reconciles them in a synthesis section that states where they agree, names the crux of any disagreement, and flags novelty claims that cannot be verified from the paper's own bibliography.
-
-**Installation:**
-
-```bash
-mkdir -p ~/.claude/skills/review-paper && curl -o ~/.claude/skills/review-paper/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper/SKILL.md
-```
-
-For a project-local install:
-
-```bash
-mkdir -p .claude/skills/review-paper && curl -o .claude/skills/review-paper/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper/SKILL.md
-```
-
-**Usage:**
+**Usage.** Every review skill takes an optional target and an optional path:
 
 ```text
 /review-paper
 /review-paper QJE
 /review-paper JF path/to/main.tex
+/review-pap AEA
+/review-grant ERC path/to/proposal.pdf
 ```
 
-**Supported journals:**
+If no path is given, the skill auto-detects the main file and follows its `\input{}` graph. If no target is given, it applies high general standards without a specific persona.
 
-| Category | Journals |
+| Skill | Recognised targets |
 |---|---|
-| Top-5 economics | `AER`, `QJE`, `JPE`, `Econometrica`, `REStud` |
-| Finance | `JF`, `JFE`, `RFS`, `JFQA` |
-| Macro | `AEJMacro`, `JME`, `RED` |
+| `review-paper` | Top-5 economics: `AER`, `QJE`, `JPE`, `Econometrica`, `REStud`. Finance: `JF`, `JFE`, `RFS`, `JFQA`. Macro: `AEJMacro`, `JME`, `RED` |
+| `review-pap` | Registries: `AEA`, `EGAP`, `OSF`, `ClinicalTrials`, `ISRCTN`. Journals: `AER`, `QJE`, `JPE`, `RESTUD`, `AEJ`, `JEEA`. General: `top-journal` (default), `working-paper` |
+| `review-grant` | `NSF`, `NIH`, `ERC`, `HorizonEurope`, `major-funder` (default), `foundation` |
 
-If no journal is specified, the skill applies high general standards without a specific journal persona. If no path is provided, it auto-detects the main `.tex` file.
+Add journals or funders by editing the recognised names list in the skill file. Add project-specific context in your prompt or in a local `CLAUDE.md`.
 
-**Output:**
+**Which paper review to run.** `review-paper-checks` is for a draft you already believe in, shortly before submission, when you want to find things that are wrong rather than things that are debatable. `review-paper-light` is for a quick read of the argument while the paper is still moving. `review-paper` is the full report once the draft is close to final.
 
-Saves a consolidated report to `reviews/PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md`, automatically appending `-v2`, `-v3`, and so on if a file already exists. Reports live in a `reviews/` subfolder so they cannot contaminate future runs.
+**Requirements.** [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent. The paper reviews expect a LaTeX paper. The pre-analysis plan and grant reviews accept `.md`, `.txt`, or `.tex`, and will attempt `.pdf` and `.docx` while noting any accessibility limits. Both also inspect supporting files when present, such as power calculations, survey instruments, budgets, timelines, and CVs.
 
-**Customization:**
 
-- Add journals or fields by editing the recognized journal names list in the skill file.
-- Add project-specific context in your prompt or in a local `CLAUDE.md` file.
-- Adjust folder discovery or save paths directly in the skill if your project structure differs from the default assumptions.
-
-**Requirements:**
-
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
-- A LaTeX paper. The skill reads `.tex` files and optionally inspects figure and table files.
-
-### `review-paper-light` — Quick Paper Check
-
-Runs a fast 2-agent pre-submission check for an economics paper. It focuses on contribution, identification, causal overclaiming, and unsupported claims, and is designed for quick iteration before a full review.
-
-**Installation:**
-
-```bash
-mkdir -p ~/.claude/skills/review-paper-light && curl -o ~/.claude/skills/review-paper-light/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-light/SKILL.md
-```
-
-For a project-local install:
-
-```bash
-mkdir -p .claude/skills/review-paper-light && curl -o .claude/skills/review-paper-light/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-light/SKILL.md
-```
-
-**Usage:**
-
-```text
-/review-paper-light
-/review-paper-light path/to/main.tex
-```
-
-If no path is provided, the skill auto-detects the main `.tex` file.
-
-**Output:**
-
-Saves a short prioritized report to `reviews/QUICK_REVIEW_[YYYY-MM-DD].md`, automatically versioning the filename if one already exists.
-
-**Requirements:**
-
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
-- A LaTeX paper.
-
-### `review-paper-checks` — Mechanical Paper Check
-
-Runs a fast 3-agent check for things that are *wrong* in a paper rather than things that are debatable: spelling and grammar, internal consistency (numbers in the text against numbers in the tables, abstract against results, terminology drift, broken cross-references and citations), and unsupported claims (causal language the design does not license, mechanisms asserted as facts, missing caveats, unverified priority assertions).
-
-It deliberately does not judge the contribution, evaluate the identification strategy, or issue a recommendation. Use `review-paper-light` or `review-paper` for that. Run `review-paper-checks` on a draft you already believe in, shortly before submission.
-
-**Installation:**
-
-```bash
-mkdir -p ~/.claude/skills/review-paper-checks && curl -o ~/.claude/skills/review-paper-checks/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-checks/SKILL.md
-```
-
-For a project-local install:
-
-```bash
-mkdir -p .claude/skills/review-paper-checks && curl -o .claude/skills/review-paper-checks/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-checks/SKILL.md
-```
-
-**Usage:**
-
-```text
-/review-paper-checks
-/review-paper-checks path/to/main.tex
-```
-
-If no path is provided, the skill auto-detects the main `.tex` file and follows its `\input{}` graph.
-
-**Output:**
-
-Saves a prioritized fix list to `reviews/PAPER_CHECK_[YYYY-MM-DD].md`, automatically versioning the filename if one already exists. Afterwards it offers to apply the unambiguous mechanical fixes (spelling, grammar, broken references) directly to the `.tex` files, leaving every claim-level item for you to judge.
-
-**Requirements:**
-
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
-- A LaTeX paper. Table `.tex` files and a `.bib` file, if present, let the consistency and citation checks run.
+## Feedback on your code
 
 ### `review-paper-code` — Paper-Code Reproducibility Review
 
-Runs a paper-code review for empirical research projects. It discovers the main LaTeX paper and analysis code, checks reproducibility and code quality, maps the paper's main empirical claims to the code, and writes a constructive report highlighting strengths, gaps to verify, and concrete next steps.
-
-**What it reviews:**
+Discovers the main LaTeX paper and the analysis code, checks reproducibility and code quality, maps the paper's main empirical claims to the code, and writes a constructive report with strengths, gaps to verify, and next steps.
 
 | Area | Focus |
 |---|---|
@@ -197,20 +120,6 @@ Runs a paper-code review for empirical research projects. It discovers the main 
 | Reproducibility | Paths, seeds, outputs, dependencies, run order, documentation |
 | Code quality | Structure, commented-out code, opaque transforms, major thresholds |
 | Paper-code alignment | Tables, variables, sample restrictions, methods, clustering, fixed effects |
-
-**Installation:**
-
-```bash
-mkdir -p ~/.claude/skills/review-paper-code && curl -o ~/.claude/skills/review-paper-code/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-code/SKILL.md
-```
-
-For a project-local install:
-
-```bash
-mkdir -p .claude/skills/review-paper-code && curl -o .claude/skills/review-paper-code/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-paper-code/SKILL.md
-```
 
 **Usage:**
 
@@ -221,184 +130,13 @@ mkdir -p .claude/skills/review-paper-code && curl -o .claude/skills/review-paper
 /review-paper-code path/to/main.tex path/to/code_dir full
 ```
 
-**Review depth:**
+The default depth, `main`, focuses on the main scripts and core outputs. `full` reviews every detected code file in scope. The report is written to `reviews/code_review_report.md`.
 
-- `main`: default; focuses on main scripts and core outputs
-- `full`: reviews all detected code files in scope
-
-**Output:**
-
-Writes a report to `reviews/code_review_report.md`, creating the `reviews/` folder if needed.
-
-**Requirements:**
-
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
-- A LaTeX paper plus Stata, R, or Python analysis code.
-
-### `review-pap` — Pre-Analysis Plan Review
-
-Runs a 6-agent pre-submission review of a pre-analysis plan (PAP). The skill auto-detects the main PAP and supporting files, then evaluates writing quality, specification completeness, internal consistency, identification strategy, statistical analysis, implementation details, and registry or journal fit.
-
-**Installation:**
-
-```bash
-mkdir -p ~/.claude/skills/review-pap && curl -o ~/.claude/skills/review-pap/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-pap/SKILL.md
-```
-
-For a project-local install:
-
-```bash
-mkdir -p .claude/skills/review-pap && curl -o .claude/skills/review-pap/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-pap/SKILL.md
-```
-
-**Usage:**
-
-```text
-/review-pap
-/review-pap AEA
-/review-pap QJE path/to/pap.tex
-```
-
-**Supported targets:**
-
-- Trial registries: `AEA`, `EGAP`, `OSF`, `ClinicalTrials`, `ISRCTN`
-- Journal standards: `AER`, `QJE`, `JPE`, `RESTUD`, `AEJ`, `JEEA`
-- General standards: `top-journal`, `working-paper`
-
-If no target is specified, the skill defaults to `top-journal`. If no path is provided, it auto-detects the main PAP file.
-
-**Supporting files it can inspect:**
-
-- Power calculations and sample-size worksheets
-- Survey instruments and questionnaires
-- Randomization protocols and sampling frames
-- Code skeletons and mock tables
-- Data dictionaries and ethics materials
-
-**Output:**
-
-Saves a consolidated report to `reviews/PAP_REVIEW_[YYYY-MM-DD].md`, automatically versioning the filename if one already exists.
-
-**Requirements:**
-
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
-- A PAP in a readable format such as `.md`, `.txt`, or `.tex`. The skill can also attempt to work with `.pdf` and `.docx`, while noting accessibility limitations if needed.
-
-### `review-grant` — Grant Proposal Review
-
-Runs a 6-agent pre-submission panel review of a grant proposal. The skill auto-detects the main proposal and supporting documents, then evaluates clarity, compliance signals, internal consistency, significance, innovation, research design, feasibility, budget logic, team readiness, and fit to the target funder or program.
-
-**Installation:**
-
-```bash
-mkdir -p ~/.claude/skills/review-grant && curl -o ~/.claude/skills/review-grant/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-grant/SKILL.md
-```
-
-For a project-local install:
-
-```bash
-mkdir -p .claude/skills/review-grant && curl -o .claude/skills/review-grant/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/review-grant/SKILL.md
-```
-
-**Usage:**
-
-```text
-/review-grant
-/review-grant NSF
-/review-grant NIH path/to/proposal.pdf
-```
-
-**Supported funders/programs:**
-
-- US federal science and health: `NSF`, `NIH`
-- International research funders: `ERC`, `HorizonEurope`
-- General proposal standards: `major-funder`, `foundation`
-
-If no target is specified, the skill defaults to `major-funder`. If no path is provided, it auto-detects the main proposal file.
-
-**Supporting files it can inspect:**
-
-- Budgets and budget justifications
-- Timelines and workplans
-- Biosketches, CVs, and personnel documents
-- Data-management plans, mentoring plans, and facilities statements
-- Letters of support, appendices, and supplementary materials
-
-**Output:**
-
-Saves a consolidated report to `reviews/GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md`, automatically versioning the filename if one already exists.
-
-**Requirements:**
-
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
-- A proposal in a readable format such as `.md`, `.txt`, or `.tex`. The skill can also attempt to work with `.pdf` and `.docx`, while noting accessibility limitations if needed.
-
-### `explain-diff` — Explain a Code Change
-
-Explains a change to your analysis code well enough that someone who did not write it could defend it. This is the one skill here that is not a review. It is aimed at the coauthor who needs to understand what an AI assistant or a collaborator just did to the estimation pipeline, and at your future self returning to a project after six months.
-
-The skill reads the diff and the surrounding code from scratch, ignoring any account of the change that already exists in the conversation, then writes a self-contained HTML page you open in a browser.
-
-The idea comes from Geoffrey Litt's [Understanding is the new bottleneck](https://www.geoffreylitt.com/2026/07/02/understanding-is-the-new-bottleneck), which argues that once agents write most of the code, the scarce resource is not verification but the researcher's own grasp of the system — you need the concepts in your head to think about what to do next. Litt proposes explainer documents and embedded quizzes as a deliberate speed regulator. This skill is that proposal applied to empirical research code, where the thing you must not lose track of is what happened to the sample and the coefficients.
-
-**What the page contains:**
-
-| Section | Content |
-|---|---|
-| 1 | What the code did before, established by reading the surrounding scripts |
-| 2 | What changed and why, in plain language with no code |
-| 3 | Consequences for the results — which sample, which coefficients, which tables, and in which direction |
-| 4 | Walkthrough of the changed code, grouped by purpose rather than by file |
-| 5 | A five-question multiple-choice quiz with explanations for every option |
-
-Section 3 is the point of the skill. It requires verification rather than inference: comparing observation counts and coefficients between runs, checking whether a modified table file differs in its numbers or only in a timestamp, and reading any new output file before quoting a figure from it. When nothing about the results changed, the page has to say so explicitly and show the evidence.
-
-At least two quiz questions must test empirical consequences rather than syntax — which observations enter the sample, what the coefficient now identifies, what would change if an assumption failed.
-
-**Installation:**
-
-```bash
-mkdir -p ~/.claude/skills/explain-diff && curl -o ~/.claude/skills/explain-diff/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/explain-diff/SKILL.md
-```
-
-For a project-local install:
-
-```bash
-mkdir -p .claude/skills/explain-diff && curl -o .claude/skills/explain-diff/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/explain-diff/SKILL.md
-```
-
-**Usage:**
-
-```text
-/explain-diff
-/explain-diff abc123
-/explain-diff main..HEAD
-```
-
-With no argument the skill explains the uncommitted working tree against `HEAD`, including files that are new and therefore invisible to `git diff`. A single ref is compared against the working tree. A range is used as given.
-
-**Output:**
-
-Writes one HTML file **outside the repository**, saved to `~/Documents/` unless you name another directory. Keeping the page out of the repo means it never lands in a commit or in your paper's folder, and the skill confirms with `git status` afterwards that nothing in the project changed. You also get a plain-text summary in the terminal, so you do not have to open the page to learn whether the results moved.
-
-Filenames end in a ref tag so the pages stay matchable to commits as they accumulate: `2026-08-01-cluster-by-municipality-wt-e956a7e.html` for a working tree against `HEAD`, or the short SHAs for a ref or a range. The page itself carries the full 40-character SHAs, the branch, and the exact comparison. When the comparison involves an uncommitted working tree, the page says so and lists the files, because that state is not reproducible later from the SHA alone.
-
-**Requirements:**
-
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code). No subagents are used, so this skill runs in a single context.
-- A git repository. Everything else — Stata, R, Python, LaTeX — is optional.
+**Requirements:** Claude Code with the `general-purpose` subagent, a LaTeX paper, and Stata, R, or Python analysis code.
 
 ### `audit-analysis` — Adversarial Audit of Changed Analysis Code
 
-Finds errors in changed empirical code before a referee does. The skill hands the diff to a subagent with a clean context and tells it to break the code. That isolation is the point: whoever wrote the code — including the current Claude session, if it helped — cannot steer the findings. It is the concrete form of the "fresh agent with no stake in the code" check, and it complements `review-paper-code`, which asks whether the paper matches the code rather than whether the code is right.
-
-**What the auditor checks:**
+Finds errors in changed empirical code before a referee does. The skill hands the diff to a subagent with a clean context and tells it to break the code. That isolation is the point: whoever wrote the code, including the current Claude session if it helped, cannot steer the findings. It complements `review-paper-code`, which asks whether the paper matches the code rather than whether the code is right.
 
 | Area | Focus |
 |---|---|
@@ -411,20 +149,6 @@ Finds errors in changed empirical code before a referee does. The skill hands th
 
 Every finding must cite a file, a line, and a quoted excerpt, and is tagged CONFIRMED (visible in the code) or SUSPECTED (needs the data). Unanchored findings are dropped and counted. The auditor also reports, category by category, where it found nothing, and closes with the one thing it could not check without the data.
 
-**Installation:**
-
-```bash
-mkdir -p ~/.claude/skills/audit-analysis && curl -o ~/.claude/skills/audit-analysis/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/audit-analysis/SKILL.md
-```
-
-For a project-local install:
-
-```bash
-mkdir -p .claude/skills/audit-analysis && curl -o .claude/skills/audit-analysis/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/audit-analysis/SKILL.md
-```
-
 **Usage:**
 
 ```text
@@ -435,20 +159,48 @@ mkdir -p .claude/skills/audit-analysis && curl -o .claude/skills/audit-analysis/
 
 With no argument the working tree and commits are audited against `main`. Pass a branch, tag, or commit to audit against that instead. Diffs above roughly 1,500 changed lines are split across two auditors.
 
-**Output:**
+**Output:** Findings are relayed in the terminal, worst first, without softening. Nothing is written or changed in the repository. If you want repairs, that is a separate request.
 
-Findings are relayed in the terminal, worst first, without softening. Nothing is written or changed in the repository. If you want repairs, that is a separate request.
+**Requirements:** Claude Code with the `general-purpose` subagent, and a git repository with Stata, R, or Python analysis code. Logs improve the sample checks but are not required.
 
-**Requirements:**
+### `explain-diff` — Explain a Code Change
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
-- A git repository with Stata, R, or Python analysis code. Logs improve the sample checks but are not required.
+Explains a change to your analysis code well enough that someone who did not write it could defend it. It is aimed at the coauthor who needs to understand what an AI assistant or a collaborator just did to the estimation pipeline, and at your future self returning to a project after six months.
+
+The skill reads the diff and the surrounding code from scratch, ignoring any account of the change that already exists in the conversation, then writes a self-contained HTML page you open in a browser.
+
+The idea comes from Geoffrey Litt's [Understanding is the new bottleneck](https://www.geoffreylitt.com/2026/07/02/understanding-is-the-new-bottleneck), which argues that once agents write most of the code, the scarce resource is not verification but the researcher's own grasp of the system. Litt proposes explainer documents and embedded quizzes as a deliberate speed regulator. This skill is that proposal applied to empirical research code, where the thing you must not lose track of is what happened to the sample and the coefficients.
+
+| Section | Content |
+|---|---|
+| 1 | What the code did before, established by reading the surrounding scripts |
+| 2 | What changed and why, in plain language with no code |
+| 3 | Consequences for the results: which sample, which coefficients, which tables, and in which direction |
+| 4 | Walkthrough of the changed code, grouped by purpose rather than by file |
+| 5 | A five-question multiple-choice quiz with explanations for every option |
+
+Section 3 is the point of the skill. It requires verification rather than inference: comparing observation counts and coefficients between runs, checking whether a modified table file differs in its numbers or only in a timestamp, and reading any new output file before quoting a figure from it. When nothing about the results changed, the page has to say so explicitly and show the evidence. At least two quiz questions test empirical consequences rather than syntax.
+
+**Usage:**
+
+```text
+/explain-diff
+/explain-diff abc123
+/explain-diff main..HEAD
+```
+
+With no argument the skill explains the uncommitted working tree against `HEAD`, including files that are new and therefore invisible to `git diff`. A single ref is compared against the working tree. A range is used as given.
+
+**Output:** One HTML file saved **outside the repository**, in `~/Documents/` unless you name another directory, so it never lands in a commit or in your paper's folder. The skill confirms with `git status` afterwards that nothing in the project changed. Filenames end in a ref tag, for example `2026-08-01-cluster-by-municipality-wt-e956a7e.html`, so the pages stay matchable to commits. The page itself carries the full SHAs, the branch, and the exact comparison. You also get a plain-text summary in the terminal.
+
+**Requirements:** Claude Code and a git repository. No subagents are used. Stata, R, Python, and LaTeX are all optional.
+
+
+## Communicating your results
 
 ### `paper-version` — Policy Brief, One-Page, or Five-Page Summary
 
-Turns a LaTeX research paper into a version for a non-specialist audience, checks it against the paper, and produces a standalone HTML page ready for GitHub Pages. Four agents run in sequence: a reader extracts the paper's content and claims verbatim, a writer drafts the requested format, a reviewer compares every number and causal claim in the draft against the extraction, and — after you have read the review and edited the draft — a fourth agent builds the page.
-
-**Formats:**
+Turns a LaTeX research paper into a version for a non-specialist audience, checks it against the paper, and produces a standalone HTML page ready for GitHub Pages. Four agents run in sequence: a reader extracts the paper's content and claims verbatim, a writer drafts the requested format, a reviewer compares every number and causal claim in the draft against the extraction, and, after you have read the review and edited the draft, a fourth agent builds the page.
 
 | Argument | Output |
 |---|---|
@@ -457,20 +209,6 @@ Turns a LaTeX research paper into a version for a non-specialist audience, check
 | `5page` | Narrative summary with light structure: Background, What We Did, What We Found, Why It Matters, Limitations (1,400–1,600 words) |
 
 The reviewer flags three kinds of problem: wrong or misattributed numbers, causal language stronger than the paper's own, and shifts in emphasis away from what the paper treats as central. The skill pauses after the review so you can edit the draft before the page is built.
-
-**Installation:**
-
-```bash
-mkdir -p ~/.claude/skills/paper-version && curl -o ~/.claude/skills/paper-version/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/paper-version/SKILL.md
-```
-
-For a project-local install:
-
-```bash
-mkdir -p .claude/skills/paper-version && curl -o .claude/skills/paper-version/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/paper-version/SKILL.md
-```
 
 **Usage:**
 
@@ -482,36 +220,43 @@ mkdir -p .claude/skills/paper-version && curl -o .claude/skills/paper-version/SK
 
 Run it from the paper's project folder. The skill finds the main `.tex` file and follows `\input` and `\include`.
 
-**Output:**
+**Output:** An `output/` folder in the project containing `paper_extraction.md`, `[format]_draft.md`, `[format]_review.md`, and `index.html`. PNG or JPG versions of the paper's key figures are embedded when they exist in the project.
 
-Writes to an `output/` folder in the project: `paper_extraction.md`, `[format]_draft.md`, `[format]_review.md`, and `index.html`. PNG or JPG versions of the paper's key figures are embedded when they exist in the project.
+**Requirements:** Claude Code with the `general-purpose` subagent, and a LaTeX paper.
+
+### `explorable-deck` — Slide Deck in the Explorable-Explanation Style
+
+Builds a presentation from a paper, a set of notes, or a codebase as a [Quarto](https://quarto.org) reveal.js deck. The design follows the explorable-explanation tradition of Nicky Case and Bret Victor, adapted to the constraints of a talk: one idea per slide, titles that are assertions and read as the argument in sequence, a concrete running example introduced before any abstraction, and figures drawn at run time as stages the presenter operates while talking. The paper's own figures are converted from PDF and recoloured into the deck's palette. Everything a questioner might want goes into an appendix of uncounted slides linked from the main line, and the printed PDF has to carry the argument on its own. It is the talk-shaped sibling of the [`explorable-explanations`](https://github.com/nityeshaga/claude-home-base/tree/main/plugins/creative/skills/explorable-explanations) skill from the claude-home-base repository, which builds the website version as a non-linear tree of short interactive pages. When an explorable already exists for the topic, the deck reuses its data and chart code so the two never disagree on a number.
+
+The skill first fixes the frame (audience, length, venue) and writes a talk script in `plan.md` before building any slide. If you have not said otherwise it assumes a 20-minute conference talk for a mixed academic room. Every number in a chart lives in one data object that the prose also reads from, so the two cannot disagree. After the deck renders, the skill screenshots every slide, runs independent review agents for writing, slides, visuals, and teaching, plus a simulated audience member and a creative director, and fixes what they find.
+
+**Usage:**
+
+```text
+/explorable-deck
+/explorable-deck 12-minute seminar talk from paper/main.tex
+```
+
+Claude may also pick this skill on its own when you ask for a presentation, talk, or slides.
+
+**Output:** One folder per deck containing `index.qmd`, the theme, the chart code, converted figures, `plan.md`, and a README that says how to render, check, and present it. Render with `quarto render index.qmd` and open `index.html` in a browser. While presenting, `S` opens the speaker view with notes, `F` goes fullscreen, `O` shows the overview, and `E` switches to the print view for exporting a PDF.
 
 **Requirements:**
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
-- A LaTeX paper.
+- Claude Code with the `general-purpose` subagent for the review passes.
+- [Quarto](https://quarto.org/docs/get-started/) on your path.
+- Python 3 and Google Chrome, for the screenshot check. Optionally `playwright` instead of Chrome.
+- `pdftocairo` (part of poppler, `brew install poppler` on macOS) if you want the paper's PDF figures converted into the deck.
+- Install the whole `Skills/explorable-deck` folder, not just `SKILL.md`. See [Installation](#one-skill-at-a-time).
+
+
+## Utilities
 
 ### `pdf-to-markdown` — Convert a PDF to Readable Markdown
 
 Converts a PDF to a markdown file saved next to it, with page markers every twenty pages and the text trimmed at the references or appendix so the main text is what enters the context window. Useful before running any of the review skills on a paper you only have as a PDF, and for reading long documents without spending context on the bibliography.
 
-When `pdftotext` (part of poppler) is installed the conversion runs in one shot outside the model and takes seconds regardless of length. Without it the skill falls back to reading the PDF in twenty-page chunks, which works but is slow for long documents.
-
-**Installation:**
-
-```bash
-mkdir -p ~/.claude/skills/pdf-to-markdown && curl -o ~/.claude/skills/pdf-to-markdown/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/pdf-to-markdown/SKILL.md
-```
-
-For a project-local install:
-
-```bash
-mkdir -p .claude/skills/pdf-to-markdown && curl -o .claude/skills/pdf-to-markdown/SKILL.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Skills/pdf-to-markdown/SKILL.md
-```
-
-Recommended: `brew install poppler` (macOS) or `apt install poppler-utils` (Linux, WSL) for the fast path.
+When `pdftotext` (part of poppler) is installed the conversion runs in one shot outside the model and takes seconds regardless of length. Without it the skill falls back to reading the PDF in twenty-page chunks, which works but is slow for long documents. Recommended: `brew install poppler` (macOS) or `apt install poppler-utils` (Linux, WSL).
 
 **Usage:**
 
@@ -519,14 +264,25 @@ Recommended: `brew install poppler` (macOS) or `apt install poppler-utils` (Linu
 /pdf-to-markdown path/to/paper.pdf
 ```
 
-**Output:**
+**Output:** `path/to/paper.md`, plus a short report: method used, pages processed, where the text was trimmed, and any unreadable pages.
 
-`path/to/paper.md`, plus a short report: method used, pages processed, where the text was trimmed, and any unreadable pages.
+**Requirements:** Claude Code. No subagents are used. `pdftotext` is optional but recommended.
 
-**Requirements:**
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code). No subagents are used.
-- Optional: `pdftotext`. The page-count step uses macOS `mdls` when available and probes the file otherwise.
+## How to cite
+
+If you use these skills in your research, please cite the repository. GitHub's "Cite this repository" button on the repo page exports the reference in APA or BibTeX format from the `CITATION.cff` file. In BibTeX:
+
+```bibtex
+@misc{backman2026aitools,
+  author       = {B{\"a}ckman, Claes},
+  title        = {{AI} tools for research: {Claude Code} skills for feedback on and communication of academic research},
+  year         = {2026},
+  version      = {1.0.0},
+  howpublished = {\url{https://github.com/claesbackman/AI-research-feedback}}
+}
+```
+
 
 ## License
 

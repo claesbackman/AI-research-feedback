@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use these skills in your research, please cite them as below."
+title: "AI tools for research: Claude Code skills for feedback on and communication of academic research"
+authors:
+  - family-names: "Bäckman"
+    given-names: "Claes"
+    affiliation: "Leibniz Institute for Financial Research SAFE"
+    website: "https://claesbackman.com"
+type: software
+version: "1.0.0"
+date-released: "2026-10-14"
+url: "https://claesbackman.com/ai_workshop/index.html"
+repository-code: "https://github.com/claesbackman/AI-research-feedback"
+license: MIT
+keywords:
+  - "Claude Code"
+  - "academic research"
+  - "peer review"
+  - "reproducibility"
+  - "economics"
