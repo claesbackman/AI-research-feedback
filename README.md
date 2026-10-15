@@ -34,7 +34,7 @@ These are [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code). 
 
 A global install (`~/.claude/skills/`) is available in every project. A project-local install (`.claude/skills/`) applies only to that repository. Skills are picked up the next time you start Claude Code in the target directory.
 
-The review skills, `audit-analysis`, `explain-diff`, and `paper-version` set `disable-model-invocation: true`, so they run only when you explicitly type their `/` command. Claude will never launch a multi-agent review on its own. `pdf-to-markdown`, `explorable-deck` and `explorable-beamer` are the exceptions: Claude may reach for them on its own when you ask it to read a PDF or to make a presentation.
+The review skills, `audit-analysis`, `explain-diff`, and `paper-version` set `disable-model-invocation: true`, so they run only when you explicitly type their `/` command. Claude will never launch a multi-agent review on its own. `pdf-to-markdown`, `explorable-deck` and `explorable-beamer` are the exceptions: Claude may reach for them on its own when you ask it to read a PDF or to make a presentation. The two deck skills still run their multi-agent review only when you ask for it, for example with `/explorable-beamer review`, or `full` to add the creative director.
 
 
 ## Installation
@@ -229,14 +229,28 @@ Run it from the paper's project folder. The skill finds the main `.tex` file and
 
 Builds a presentation from a paper, a set of notes, or a codebase as a [Quarto](https://quarto.org) reveal.js deck. The design follows the explorable-explanation tradition of Nicky Case and Bret Victor, adapted to the constraints of a talk: one idea per slide, titles that are assertions and read as the argument in sequence, a concrete running example introduced before any abstraction, and figures drawn at run time as stages the presenter operates while talking. The paper's own figures are converted from PDF and recoloured into the deck's palette. Everything a questioner might want goes into an appendix of uncounted slides linked from the main line, and the printed PDF has to carry the argument on its own. It is the talk-shaped sibling of the [`explorable-explanations`](https://github.com/nityeshaga/claude-home-base/tree/main/plugins/creative/skills/explorable-explanations) skill from the claude-home-base repository, which builds the website version as a non-linear tree of short interactive pages. When an explorable already exists for the topic, the deck reuses its data and chart code so the two never disagree on a number.
 
-The skill first fixes the frame (audience, length, venue) and writes a talk script in `plan.md` before building any slide. If you have not said otherwise it assumes a 20-minute conference talk for a mixed academic room. Every number in a chart lives in one data object that the prose also reads from, so the two cannot disagree. After the deck renders, the skill screenshots every slide, runs independent review agents for writing, slides, visuals, and teaching, plus a simulated audience member and a creative director, and fixes what they find.
+The skill first fixes the frame (audience, length, venue) and writes a talk script in `plan.md` before building any slide. If you have not said otherwise it assumes a 20-minute conference talk for a mixed academic room. Every number in a chart lives in one data object that the prose also reads from, so the two cannot disagree. After the deck renders, the skill screenshots every slide, fixes every console error and every slide whose content runs off the frame, and checks the deck against a list of common faults.
+
+**Review.** The multi-agent review is optional. It is the slowest part of a run, and it is most useful once you have seen the deck and settled its content. By default the skill stops after its own checks and tells you that it skipped the review. You can ask for the review when you build the deck, or later on a finished one:
+
+| Level | How to ask | What runs after the checks |
+|---|---|---|
+| none (default) | `/explorable-deck` | Nothing more |
+| `review` | `/explorable-deck review`, or "review the deck" | Four review agents for writing, slides, visuals, and teaching, plus a simulated audience member, all in parallel. The skill then builds a second version from their findings |
+| `full` | `/explorable-deck full`, or "full review" | The above, then a creative director who proposes a visual identity for the deck |
+
+Build without review while the content is still moving, and run `review` before a talk that matters.
 
 **Usage:**
 
 ```text
 /explorable-deck
 /explorable-deck 12-minute seminar talk from paper/main.tex
+/explorable-deck review 20-minute talk from paper/main.tex
+/explorable-deck review slides/
 ```
+
+The last line reviews a deck that already exists in `slides/`.
 
 Claude may also pick this skill on its own when you ask for a presentation, talk, or slides.
 
@@ -244,11 +258,41 @@ Claude may also pick this skill on its own when you ask for a presentation, talk
 
 **Requirements:**
 
-- Claude Code with the `general-purpose` subagent for the review passes.
+- Claude Code with the `general-purpose` subagent for the optional review passes.
 - [Quarto](https://quarto.org/docs/get-started/) on your path.
 - Python 3 and Google Chrome, for the screenshot check. Optionally `playwright` instead of Chrome.
 - `pdftocairo` (part of poppler, `brew install poppler` on macOS) if you want the paper's PDF figures converted into the deck.
 - Install the whole `Skills/explorable-deck` folder, not just `SKILL.md`. See [Installation](#one-skill-at-a-time).
+
+### `explorable-beamer` — The Same Deck in LaTeX Beamer
+
+Builds the same kind of deck as `explorable-deck`, under the same design rules, as a LaTeX beamer PDF. Use it when the talk has to be a PDF or the project already lives in LaTeX. Because a PDF cannot run live figures, the stages are TikZ and pgfplots charts that the presenter steps through with overlays. The paper's own PDF figures go in directly and are recoloured into the deck's palette. Every number a chart draws or a sentence quotes comes from one file, `data/numbers.tex`. When a Quarto deck or a website explorable already exists for the topic, the skill transcribes its numbers instead of retyping them from the paper.
+
+One build produces three PDFs: the talk with each overlay step on its own page, a handout with one page per frame in its finished state for printing or sending, and a notes version with each slide beside its speaker note. While editing, `sh build.sh --fast` builds only the talk, in about a third of the time. The check screenshots every page, reports errors and warnings from the LaTeX log, and names any page whose content reaches the footline, which beamer compiles with only an easily missed log line. A lint then flags label titles, missing speaker notes and source lines, shrunk type, and overlays that would print wrongly in the handout.
+
+Review works as in `explorable-deck`: none by default, `review` for the four review agents and the audience member, and `full` to add the creative director.
+
+**Usage:**
+
+```text
+/explorable-beamer
+/explorable-beamer 20-minute conference talk from paper/main.tex
+/explorable-beamer review slides/
+/explorable-beamer full 45-minute job-market talk from paper/main.tex
+```
+
+Claude may also pick this skill on its own when you ask for a Beamer, LaTeX, or PDF presentation.
+
+**Output:** One folder per deck containing `deck.tex`, the theme, the charts, the data file, the recoloured figures, `plan.md`, and a README that says how to build, check, and present it. `sh build.sh` writes `deck.pdf` to present full screen in any PDF viewer, `deck-handout.pdf` to print or send, and `_build/deck-notes.pdf` for speaker notes on a second screen with `pdfpc --notes=right _build/deck-notes.pdf`.
+
+**Requirements:**
+
+- Claude Code with the `general-purpose` subagent for the optional review passes.
+- TeX Live 2019 or later with `lualatex`, `latexmk`, and pgfplots 1.16 or later. The template needs no network access and no font installation.
+- Python 3 and poppler (`brew install poppler` on macOS, `apt install poppler-utils` on Linux), for the screenshot check.
+- Ghostscript (`brew install ghostscript`) if you want the paper's PDF figures recoloured. Without it they are copied in unchanged.
+- Optionally [pdfpc](https://pdfpc.github.io/) to present with speaker notes.
+- Install the whole `Skills/explorable-beamer` folder, not just `SKILL.md`. See [Installation](#one-skill-at-a-time).
 
 
 ## Utilities

@@ -24,6 +24,7 @@ _build/, _shots/          build and screenshot output (gitignored)
 
 ```sh
 sh build.sh                    # three PDFs with latexmk (lualatex)
+sh build.sh --fast             # deck.pdf only, while editing
 python3 shoot.py               # _shots/NN.png for every page, with its frame and step
 python3 check_deck.py --minutes <N>
 ```

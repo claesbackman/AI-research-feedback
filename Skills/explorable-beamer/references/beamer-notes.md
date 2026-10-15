@@ -117,6 +117,7 @@ Appendix: `\appendix` then `\divider{Appendix}` then the rooms. Frames after `\a
 
 ```sh
 sh build.sh                        # _build/deck.pdf, deck-handout.pdf, deck-notes.pdf; deck.pdf copied out
+sh build.sh --fast                 # deck.pdf only, about a third of the time; handout and notes go stale
 python3 shoot.py                   # every page → _shots/NN.png, page → frame map, log messages, overflow
 python3 shoot.py 3 4 12            # pages by number; the other screenshots are kept
 python3 shoot.py --handout         # the handout instead: one page per frame → _shots-handout/

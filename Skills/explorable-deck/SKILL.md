@@ -1,6 +1,6 @@
 ---
 name: explorable-deck
-description: Build a Quarto reveal.js slide deck in the explorable-explanation style (Nicky Case) — one idea per slide, assertion titles, a concrete running example, run-time SVG stages the presenter drives live, the source's own figures recoloured into the deck palette, and an appendix of side rooms. Use for any request for a presentation, talk, slides, a seminar, conference, lecture, keynote or job-market deck, a Quarto or reveal.js deck, "turn this paper into slides", "a deck like the explorable", or for revising a deck built this way. Prefer it over .pptx skills unless the user names PowerPoint, Beamer, LaTeX or Google Slides. Not for a website explorable (that is explorable-explanations) or a poster.
+description: Build a Quarto reveal.js slide deck in the explorable-explanation style (Nicky Case) — one idea per slide, assertion titles, a concrete running example, run-time SVG stages the presenter drives live, the source's own figures recoloured into the deck palette, and an appendix of side rooms. Use for any request for a presentation, talk, slides, a seminar, conference, lecture, keynote or job-market deck, a Quarto or reveal.js deck, "turn this paper into slides", "a deck like the explorable", or for revising or reviewing a deck built this way. Prefer it over .pptx skills unless the user names PowerPoint, Beamer, LaTeX or Google Slides. Not for a website explorable (that is explorable-explanations) or a poster.
 ---
 
 # Explorable deck
@@ -37,6 +37,18 @@ One folder per deck, rendered with `quarto render index.qmd`:
 3. [Quarto and reveal.js notes](references/quarto-reveal-notes.md): the template's layout vocabulary, the stage API, the figure pipeline, rendering, screenshots, PDF export, and the traps. Read before building.
 4. Look at the four screenshots in [references/example-deck/](references/example-deck/) of a finished deck built this way (a hook with two characters, an animated reveal stage, a paper figure beside prose, a coefficient plot), and at Case's [Evolution of Trust](references/evolution-of-trust/) for the broader vibe. The example deck is a housing-returns paper (Bäckman, D'Lima and Khorunzhina, "Anna and Bo"); if the source is that paper or a neighbour of it, borrow nothing from the examples but the register. For any topic, take the register, not the content: the topic decides the colours, the characters and the shapes.
 
+## Review level
+
+The render and its checks always run. The subagent review is the slow part of a run: five or six agents each read the whole deck and every screenshot, and a second version is built after them. It is worth most once the user has seen the deck and settled the content, so it runs only when asked:
+
+| level | how the user asks | what runs after the checks |
+|---|---|---|
+| none (default) | a plain request for a deck | the self-check only; the handover says review was skipped and how to ask for it |
+| `review` | "with review", "review the deck", `/explorable-deck review` | the four judges and Maria, then a second version |
+| `full` | "full review", "with the creative director", `/explorable-deck full` | the above, then the creative director |
+
+A request to review a deck that already exists skips steps 1–6: run the final check in step 7 so the screenshots are current, then steps 8–11 at the level asked. "Review" on its own means `review`.
+
 ## Working rhythm
 
 1. **Read the source.** The paper, notes, or codebase, and any existing explorable for the topic. If one exists, its `lib.js` data object and chart code are the deck's starting material: copy them rather than redrawing, so the two never disagree on a number.
@@ -53,14 +65,15 @@ One folder per deck, rendered with `quarto render index.qmd`:
 4. **Scaffold** with `scripts/new_deck.sh`. Give each of the four colour tokens a topic alias in `theme/deck.scss` (`--gain: var(--primary);`) and paint the charts with the aliases; never rename the generic tokens, because the classes and the notes reference depend on them. Fill `L.DATA` and convert the source figures you will use. If a `dataviz` skill is available, its rules on marks and colour apply inside the palette; the palette itself comes from this theme.
 5. **Build the hook and the first section**, render, screenshot, and look at every screenshot yourself before going on. In an interactive session, show this batch to the user before building the rest.
 6. **Build the rest.** Every stage has a caption that says whether it is measured or stylised, a finished state for `?static` and print, and a speaker note that says what to do with it. Every evidence slide has a source line. Titles are assertions.
-7. **Check**: `quarto render index.qmd`, then `python shoot_chrome.py`. Fix every console message and every slide whose content reaches the bottom edge of the frame, where the progress bar and menu button sit. Read all the screenshots, not just the ones you changed.
-8. **Adversarial review** with independent subagents, using the prompts below. Then fix what they found.
-9. **Creative director pass**, prompt below, and apply the ideas that survive the craft rules.
-10. **Write the deck's README** and tell the user where the deck is, how to present it (S speaker view, F fullscreen, O overview, E print view then print to PDF), and which stages are live.
+7. **Check.** While building, iterate with `quarto render index.qmd` and `python shoot_chrome.py N …`, numbering the slides you changed and every slide touched by a change to the theme, `L.DATA` or a shared chart. A numbered run replaces only those screenshots and reports console messages only for those slides. Inserting or deleting a slide shifts the numbers after it, so run it without numbers after such a change. Fix every console message and every slide whose content reaches the bottom edge of the frame, where the progress bar and menu button sit, as they appear. When the deck is complete, run the final check once: `quarto render index.qmd`, then `python shoot_chrome.py` with no numbers. Fix every finding and read all the screenshots.
+8. **Self-check**, at every level: go through "What goes wrong" in `references/deck-craft.md` against the source and the screenshots you have already read, and fix what you find. This is your own pass, with no subagents.
+9. **Review**, at `review` and `full` only: the four judges and Maria, prompts below. Then build the second version from what they found and run the final check again.
+10. **Creative director**, at `full` only, prompt below. Apply the ideas that survive the craft rules and run the final check again.
+11. **Write the deck's README** and tell the user where the deck is, how to present it (S speaker view, F fullscreen, O overview, E print view then print to PDF), and which stages are live. If no review ran, close with one line saying so and how to ask for it: "review the deck" runs the judges and Maria, and "full review" adds the creative director.
 
 ## Review prompts
 
-Run these as separate subagents after the deck renders cleanly. Each reads `index.qmd`, `js/deck-charts.js`, `plan.md`, the craft reference, and the screenshots in `_shots/`.
+Run these at the `review` and `full` levels only, after the final check passes. Launch the four judges and Maria together in one message so they run in parallel; the creative director comes after the second version. Each reads `index.qmd`, `js/deck-charts.js`, `plan.md`, the craft reference, and the screenshots in `_shots/`.
 
 **Four-dimension judges.** One subagent per dimension, each told to find violations of `references/deck-craft.md` and to list them by slide number with the sentence or element at fault, no fixes:
 
@@ -79,7 +92,7 @@ Go through the deck in order, from the code and the screenshots, and say exactly
 
 Treat what she finds as the opportunity it is, and build the second version properly rather than patching sentences.
 
-**Creative director.** One subagent, after structure and writing are settled:
+**Creative director.** One subagent, at the `full` level, after the second version is built and structure and writing are settled:
 
 ```
 Act as creative director for this deck. Review the theme, the chart code and the screenshots. Assume structure, teaching and writing are already right. Your job is personality: what would make someone recognise this deck from one slide across the room?
