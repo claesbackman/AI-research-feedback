@@ -77,18 +77,17 @@ The review skills share one design. Each launches several specialised review age
 
 | Command | What it does | Agents | Report |
 |---|---|---|---|
-| `/review-paper` | Full referee-style review of a paper, including a steelman and an attack on the contribution grounded in the paper's own bibliography | 8 | `PRE_SUBMISSION_REVIEW_[date].md` |
+| `/review-paper` | Full review of a paper: language, internal consistency, unsupported claims, mathematics, tables and figures, and a referee assessment of identification and required analyses. A verifier agent then checks the factual findings and drops the ones that do not hold; add `quick` to skip it | 6 | `PRE_SUBMISSION_REVIEW_[date].md` |
 | `/review-paper-light` | Fast check of contribution, identification, and causal overclaiming, for quick iteration | 2 | `QUICK_REVIEW_[date].md` |
 | `/review-paper-checks` | Mechanical check of spelling, internal consistency, cross-references, and unsupported claims, with no editorial judgment. Offers to apply the unambiguous fixes to the `.tex` files afterwards | 3 | `PAPER_CHECK_[date].md` |
 | `/review-pap` | Pre-analysis plan review covering specification completeness, identification, statistical analysis, and implementation | 6 | `PAP_REVIEW_[date].md` |
 | `/review-grant` | Grant proposal panel review covering significance, innovation, design, feasibility, budget logic, and team | 6 | `GRANT_PROPOSAL_REVIEW_[date].md` |
 
-**Usage.** Every review skill takes an optional target and an optional path:
+**Usage.** The review skills take an optional path; `review-pap` and `review-grant` also take an optional target:
 
 ```text
 /review-paper
-/review-paper QJE
-/review-paper JF path/to/main.tex
+/review-paper path/to/main.tex quick
 /review-pap AEA
 /review-grant ERC path/to/proposal.pdf
 ```
@@ -97,7 +96,6 @@ If no path is given, the skill auto-detects the main file and follows its `\inpu
 
 | Skill | Recognised targets |
 |---|---|
-| `review-paper` | Top-5 economics: `AER`, `QJE`, `JPE`, `Econometrica`, `REStud`. Finance: `JF`, `JFE`, `RFS`, `JFQA`. Macro: `AEJMacro`, `JME`, `RED` |
 | `review-pap` | Registries: `AEA`, `EGAP`, `OSF`, `ClinicalTrials`, `ISRCTN`. Journals: `AER`, `QJE`, `JPE`, `RESTUD`, `AEJ`, `JEEA`. General: `top-journal` (default), `working-paper` |
 | `review-grant` | `NSF`, `NIH`, `ERC`, `HorizonEurope`, `major-funder` (default), `foundation` |
 
