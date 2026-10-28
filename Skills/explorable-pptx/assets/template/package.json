@@ -1,0 +1,8 @@
+{
+  "name": "explorable-deck",
+  "private": true,
+  "description": "An explorable deck built as PowerPoint with pptxgenjs. sh build.sh",
+  "dependencies": {
+    "pptxgenjs": "^4.0.1"
+  }
+}

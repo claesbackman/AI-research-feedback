@@ -22,6 +22,7 @@ Each skill lives in its own folder under `Skills/` with a `SKILL.md` file. Some 
 - `paper-version`: Policy brief, one-page, or five-page summary with a standalone HTML page.
 - `explorable-deck`: A Quarto reveal.js slide deck built around a running example and live, presenter-driven figures.
 - `explorable-beamer`: The same deck in LaTeX beamer, with TikZ stages the presenter steps through, a handout build, and a screenshot-and-log check of every page.
+- `explorable-pptx`: The same deck as a PowerPoint file that coauthors can edit, with stages drawn as native shapes, a handout build, and screenshots taken through PowerPoint itself.
 
 **Utilities.**
 
@@ -34,7 +35,7 @@ These are [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code). 
 
 A global install (`~/.claude/skills/`) is available in every project. A project-local install (`.claude/skills/`) applies only to that repository. Skills are picked up the next time you start Claude Code in the target directory.
 
-The review skills, `audit-analysis`, `explain-diff`, and `paper-version` set `disable-model-invocation: true`, so they run only when you explicitly type their `/` command. Claude will never launch a multi-agent review on its own. `pdf-to-markdown`, `explorable-deck` and `explorable-beamer` are the exceptions: Claude may reach for them on its own when you ask it to read a PDF or to make a presentation. The two deck skills still run their multi-agent review only when you ask for it, for example with `/explorable-beamer review`, or `full` to add the creative director.
+The review skills, `audit-analysis`, `explain-diff`, and `paper-version` set `disable-model-invocation: true`, so they run only when you explicitly type their `/` command. Claude will never launch a multi-agent review on its own. `pdf-to-markdown`, `explorable-deck`, `explorable-beamer` and `explorable-pptx` are the exceptions: Claude may reach for them on its own when you ask it to read a PDF or to make a presentation. The three deck skills still run their multi-agent review only when you ask for it, for example with `/explorable-beamer review`, or `full` to add the creative director.
 
 
 ## Installation
@@ -53,7 +54,7 @@ Re-run the same line later to update.
 
 ### One skill at a time
 
-Every skill except `explorable-deck` and `explorable-beamer` is a single `SKILL.md` file. Replace `<name>` with the skill's folder name:
+Every skill except `explorable-deck`, `explorable-beamer` and `explorable-pptx` is a single `SKILL.md` file. Replace `<name>` with the skill's folder name:
 
 ```bash
 mkdir -p ~/.claude/skills/<name> && curl -o ~/.claude/skills/<name>/SKILL.md \
@@ -62,7 +63,7 @@ mkdir -p ~/.claude/skills/<name> && curl -o ~/.claude/skills/<name>/SKILL.md \
 
 For a project-local install, use `.claude/skills/<name>` as the target instead of `~/.claude/skills/<name>`.
 
-`explorable-deck` and `explorable-beamer` ship a template, reference notes, and helper scripts alongside their `SKILL.md`, so they need the whole folder (replace the name as needed):
+`explorable-deck`, `explorable-beamer` and `explorable-pptx` ship a template, reference notes, and helper scripts alongside their `SKILL.md`, so they need the whole folder (replace the name as needed):
 
 ```bash
 git clone --depth 1 https://github.com/claesbackman/AI-research-feedback.git /tmp/airf && mkdir -p ~/.claude/skills && cp -R /tmp/airf/Skills/explorable-deck ~/.claude/skills/ && rm -rf /tmp/airf
@@ -293,6 +294,37 @@ Claude may also pick this skill on its own when you ask for a Beamer, LaTeX, or 
 - Ghostscript (`brew install ghostscript`) if you want the paper's PDF figures recoloured. Without it they are copied in unchanged.
 - Optionally [pdfpc](https://pdfpc.github.io/) to present with speaker notes.
 - Install the whole `Skills/explorable-beamer` folder, not just `SKILL.md`. See [Installation](#one-skill-at-a-time).
+
+### `explorable-pptx` — The Same Deck in PowerPoint
+
+Builds the same kind of deck as `explorable-deck`, under the same design rules, as a PowerPoint file. Use it when coauthors need to edit the slides in PowerPoint, Keynote, or Google Slides. The deck is written as a declarative `deck.js` file and turned into a `.pptx` by [pptxgenjs](https://gitbrent.github.io/PptxGenJS/). The stages are drawn as native PowerPoint shapes in the deck's palette, one slide per step, because pptxgenjs cannot write PowerPoint's click animations. The paper's PDF figures are recoloured and rendered to PNG, since PowerPoint cannot place a PDF. Every number a chart draws or a sentence quotes comes from one file, `data/numbers.js`, and the data object of an existing Quarto deck drops in unchanged.
+
+One build produces the talk and a handout with one slide per frame in its finished state. Speaker notes go into PowerPoint's own notes field and show in presenter view. While editing, `sh build.sh --fast` builds only the talk. On a Mac the check exports the deck to PDF through PowerPoint itself, so the screenshots show what the room will see. It reports build warnings and names any slide whose content reaches the footline, which matters because PowerPoint lets text spill below its box without a warning. Without PowerPoint it falls back to LibreOffice, whose substitute fonts make the check approximate. A lint then flags label titles, missing speaker notes and source lines, and font sizes or faces set by hand.
+
+Review works as in `explorable-deck`: none by default, `review` for the four review agents and the audience member, and `full` to add the creative director.
+
+**Usage:**
+
+```text
+/explorable-pptx
+/explorable-pptx 20-minute conference talk from paper/main.tex
+/explorable-pptx review slides/
+/explorable-pptx full 45-minute job-market talk from paper/main.tex
+```
+
+Claude may also pick this skill on its own when you ask for a PowerPoint or Keynote presentation, or for slides your coauthors can edit.
+
+**Output:** One folder per deck containing `deck.js`, the theme, the charts, the data file, the recoloured figures, `plan.md`, and a README that says how to build, check, and present it. `sh build.sh` writes `deck.pptx` to present with PowerPoint's presenter view and `deck-handout.pptx` to print or send.
+
+**Requirements:**
+
+- Claude Code with the `general-purpose` subagent for the optional review passes.
+- Node 18 or later with npm. The first build installs pptxgenjs into the deck folder, which needs network access once.
+- Python 3 and poppler (`brew install poppler` on macOS, `apt install poppler-utils` on Linux), for the screenshot check and for rendering the paper's figures.
+- Microsoft PowerPoint on macOS for exact screenshots. The first run may ask you to allow automation. Without PowerPoint, LibreOffice (`soffice`) gives approximate ones.
+- Ghostscript (`brew install ghostscript`) if you want the paper's PDF figures recoloured.
+- The deck uses fonts that ship with Microsoft Office. Keynote and LibreOffice show substitutes.
+- Install the whole `Skills/explorable-pptx` folder, not just `SKILL.md`. See [Installation](#one-skill-at-a-time).
 
 
 ## Utilities
