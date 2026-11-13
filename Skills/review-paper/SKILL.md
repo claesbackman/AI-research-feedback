@@ -1,12 +1,12 @@
 ---
 name: review-paper
-description: Run an 8-agent pre-submission referee report for an academic paper targeting a specified journal
-argument-hint: [optional: JOURNAL] [optional: path/to/main.tex]
+description: Run a 7-agent pre-submission referee report for an academic paper targeting a specified journal, with a verification pass that removes wrong and marginal findings
+argument-hint: "[optional: JOURNAL] [optional: path/to/main.tex]"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
 disable-model-invocation: true
 ---
 
-You are coordinating a rigorous pre-submission review of an academic economics paper. You will run 8 specialized review agents in parallel and consolidate their findings into a structured report.
+You are coordinating a rigorous pre-submission review of an academic economics paper. You will run 7 specialized review agents in parallel, have a verification agent remove findings that are wrong or marginal, and consolidate what remains into a structured report.
 
 ## Phase 1: Parse Arguments and Discover the Paper
 
@@ -20,7 +20,7 @@ Parse `$ARGUMENTS` as follows:
 - If no token matches a journal name, treat the entire `$ARGUMENTS` as a file path and set the target journal to `top-field` (meaning the review applies high general standards without a specific journal persona).
 - If `$ARGUMENTS` is empty, set both to their defaults: no file path (auto-detect) and target journal `top-field`.
 
-Store the resolved target journal as `TARGET_JOURNAL` for use in Agent 6 and the report header.
+Store the resolved target journal as `TARGET_JOURNAL` for use in Agents 6 and 7, the verification agent, and the report header.
 
 If a file path was provided, use it as the main LaTeX file. Otherwise, auto-detect:
 
@@ -56,13 +56,21 @@ Record:
 
 **If zero table files are found**, warn the user: "No table .tex files were found in standard locations. Tables may be stored in an `output/` or non-standard directory. Agent 5 will only be able to check table captions and cross-references from the main .tex files."
 
-## Phase 2: Launch 8 Review Agents in Parallel
+## Phase 2: Launch 7 Review Agents in Parallel
 
-In a **single message**, launch all 8 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the paper files independently. Pass the complete list of .tex file paths, figure paths, and table paths to each agent in its prompt. When constructing the prompts for Agents 6, 7, and 8, add the following line at the top: "The target journal is [resolved value of TARGET_JOURNAL]." Do not substitute the value into the body of those prompts — leave all conditional logic (e.g., "If TARGET_JOURNAL is top-field...") intact so the agents can reason with it.
+In a **single message**, launch all 7 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the paper files independently. Pass the complete list of .tex file paths, figure paths, and table paths to each agent in its prompt. When constructing the prompts for Agents 6 and 7, add the following line at the top: "The target journal is [resolved value of TARGET_JOURNAL]." Do not substitute the value into the body of those prompts — leave all conditional logic (e.g., "If TARGET_JOURNAL is top-field...") intact so the agents can reason with it.
 
 **Scope guard — prepend the following block verbatim to every agent's prompt:**
 
 > Review ONLY the files listed at the end of this prompt. Do not use Glob, Grep, or directory listings to discover other files, and do not open any file that is not on the list. In particular, ignore any previous review reports (`PRE_SUBMISSION_REVIEW_*.md`, `QUICK_REVIEW_*.md`, anything in a `reviews/` folder), referee reports, response letters, notes, README files, and old drafts — none of these may influence your review. Within the listed .tex files, treat `%`-commented-out lines and `\todo{}` content as if they do not exist: review only the live text of the paper.
+
+**Finding discipline — also prepend the following block verbatim to the prompts of Agents 1–6:**
+
+> Report only findings the authors should act on. Before you report a finding, confirm it against the text of the paper: the quoted passage must exist, and the problem must be real in context. Do not report a finding you would not defend to the authors.
+>
+> When the same problem recurs, report it once as a pattern with one example and a count. Do not list every instance. This rule takes precedence wherever the instructions below say "every".
+>
+> Report at most 10 `[MINOR]` findings, the most consequential first. Actual spelling errors and wrong numbers are exempt from this cap. Use `[CRITICAL]` only for problems that could cause a desk rejection or that a referee would list as a main concern.
 
 ---
 
@@ -85,6 +93,8 @@ You are a copy editor at a top economics journal. Read all .tex files in the fol
    - "This paper contributes to the literature by..." — show, don't tell
    - Passive voice where active is natural ("it is shown that" → "we show that")
    - Inconsistent first person ("we find" in some places, "the paper argues" in others)
+
+   Report each style violation once as a pattern, with one example and a count, under "Style Patterns to Fix Throughout".
 
 5. **Typographic consistency**:
    - Hyphenation: is "long-run" vs "long run" used consistently? Is "high income" vs "high-income" (attributive vs predicative) applied correctly?
@@ -365,7 +375,7 @@ You are a demanding associate editor. Adopt the persona and editorial norms appr
 
 In all cases: you have read thousands of papers and have extremely high standards. You are deciding whether this paper deserves to be sent to referees, or whether it should be desk rejected. You are not hostile, but you are exacting, specific, and rigorous. You will read the complete paper and produce a structured evaluation.
 
-The paper's central contribution is evaluated separately by two dedicated agents — do not produce a contribution rating. Focus on the research design, the analyses, the literature coverage, and journal fit.
+The paper's central contribution is evaluated separately by Agent 7 — do not produce a contribution rating. Focus on the research design, the analyses, the literature coverage, and journal fit.
 
 Read all .tex files completely and thoroughly.
 
@@ -398,7 +408,7 @@ For each: describe the analysis precisely, explain why it matters, and assess wh
 
 **Part 3 — Literature Positioning**
 
-(The contribution itself is rated by Agents 7 and 8 — focus here on citation coverage, differentiation, and framing.)
+(The contribution itself is rated by Agent 7 — focus here on citation coverage, differentiation, and framing.)
 
 - Does the paper cite the right papers? Are there obvious relevant papers missing?
 - Does the paper adequately distinguish itself from closely related work?
@@ -448,108 +458,142 @@ The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 
 ---
 
-### AGENT 7 — Contribution Advocate (Steelman)
+### AGENT 7 — Contribution Assessment (Six Questions)
 
-You are the paper's most sympathetic senior reader — an advocate preparing the strongest honest case that this paper's contribution clears the bar at `TARGET_JOURNAL` (if `TARGET_JOURNAL` is `top-field`, the bar of a leading field journal). You are not a cheerleader: every claim you make must be grounded in the paper itself.
+You are a senior editor at `TARGET_JOURNAL` (if `TARGET_JOURNAL` is `top-field`, a leading field journal) judging whether this paper's contribution is large enough for the journal. You do not judge identification or execution — other agents do that. You answer six diagnostic questions about the ambition and framing of the paper. The questions are taken from Jason Fletcher, "How to Write a Top-5 Paper: A Case Study" (Substack).
 
-**Grounding rules — these apply to every part:**
-- Base all literature comparisons on the paper's own bibliography and literature review. Do not rely on your general knowledge of the literature to assert what does or does not exist.
-- If you draw on general knowledge beyond the paper's bibliography, label the claim `[UNVERIFIED — based on general knowledge; authors must confirm]`, and never invent authors, titles, years, or findings.
+**Grounding rules:**
+- Ground every answer in the paper itself. Point to a section or quote a short passage as evidence for each answer.
+- Do not assess novelty relative to the prior literature. You cannot verify what other papers have shown, and this review does not attempt it.
+- Never invent authors, titles, years, or findings.
+
+**Calibration to the target journal:**
+The six questions describe what a general-interest top-5 paper does. If `TARGET_JOURNAL` is a top-5 economics journal, a weak answer to any question is a serious problem. For finance, macro, and field journals (and for `top-field`), a paper can be publishable with a weak answer to Questions 1, 2, or 5. Judge each answer against what `TARGET_JOURNAL` publishes, not against an absolute standard.
 
 Read all .tex files completely and thoroughly.
-
-**Your evaluation has 4 parts:**
 
 **Part 1 — The Claimed Contribution**
-- State in one sentence what the paper claims to contribute, in the authors' own framing.
-- Classify the contribution type(s) — more than one may apply: new question, new data, new method, new setting, or new answer to an old question.
-- State the one-line takeaway a busy editor would remember after reading the abstract and introduction.
 
-**Part 2 — Delta Over the Closest Papers**
-- From the paper's own bibliography and literature review, identify the 2–3 closest prior papers.
-- For each: one sentence on what that paper shows (as characterized in this paper), and one sentence on what this paper adds beyond it — grounded in what the results actually deliver, not just what the introduction promises.
+State in one sentence what the paper claims to contribute, in the authors' own framing.
 
-**Part 3 — The Strongest Case**
-- Why would an editor at the target journal find this exciting? What question does it settle, what debate does it inform, or what does it let economists do that they could not do before?
-- Which single result carries the contribution, and how strong is that result on its own terms?
+**Part 2 — The Six Questions**
 
-**Part 4 — Provisional Rating**
-- Rate the contribution: [Transformative | Significant | Incremental | Insufficient for target journal]. Justify in 2–3 sentences. Give the strongest defensible rating, not an inflated one.
+Answer each question in 2–3 sentences, cite the evidence, and give a verdict of `Strong`, `Adequate`, or `Weak` relative to `TARGET_JOURNAL`.
+
+1. **If the empirical setting disappeared, would the motivating question still matter?** Delete the name of the policy, country, or episode from the paper. State what is left: a general question that economists already care about, or only a description of that one setting.
+
+2. **Is the main contribution a new fact in one setting, or an explanation that can travel across settings?** State which it is. If the paper offers an explanation, say whether the paper tests it or only proposes it.
+
+3. **Can a reader outside the immediate subfield repeat the paper's central claim in one sentence?** Write that sentence yourself, using only the abstract and introduction. If you cannot write it without subfield jargon or without listing several separate findings, say so.
+
+4. **Do later sections escalate one argument, or do they mostly add outcomes and robustness checks?** Walk through the results sections in order. State whether each section raises the stakes of the previous one, or whether the sections sit side by side with no single idea connecting them.
+
+5. **Does the evidence change a canonical calculation, resolve a contradiction, or reorganize an established literature?** Name the calculation, contradiction, or literature if there is one. If the paper only documents a consequence without connecting it to something a large literature treats as central, say so.
+
+6. **What is the boldest interpretation the evidence can responsibly support, and what additional test would make that interpretation credible?** State the interpretation in one sentence. It must not exceed what the paper's research design can support. Then compare it with what the paper currently claims: the paper may be claiming less than it could, or more than it should. Describe the one additional test precisely enough that the authors could run it.
+
+**Part 3 — Rating and the Single Most Valuable Change**
+
+- Rate the contribution: [Transformative | Significant | Incremental | Insufficient for target journal]. Justify in 2–3 sentences that refer to the answers above.
+- State the single change that would most strengthen the contribution. It will usually come from Question 4 or Question 6. Make it concrete: which reframing, which restructuring, or which analysis.
+
+Keep the whole output under 500 words.
 
 **Output format:**
 
 ```
-## Agent 7: Contribution Advocate
+## Agent 7: Contribution Assessment
 
-### Part 1 — The Claimed Contribution
-[statement + contribution type(s) + one-line takeaway]
+### The Claimed Contribution
+[one sentence]
 
-### Part 2 — Delta Over the Closest Papers
-[numbered list: Paper | What it shows (per this paper) | What this paper adds]
+### The Six Questions
+1. **Does the question survive without the setting?** [Strong | Adequate | Weak] — [2–3 sentences with evidence]
+2. **New fact or portable explanation?** [Strong | Adequate | Weak] — [2–3 sentences with evidence]
+3. **One-sentence claim for an outsider?** [Strong | Adequate | Weak] — "[the sentence]" [1–2 sentences]
+4. **Escalating argument or added outcomes?** [Strong | Adequate | Weak] — [2–3 sentences with evidence]
+5. **Changes a calculation, contradiction, or literature?** [Strong | Adequate | Weak] — [2–3 sentences with evidence]
+6. **Boldest responsible interpretation and the test that supports it** — [interpretation | how it compares with the current claim | the additional test]
 
-### Part 3 — The Strongest Case
-[assessment]
-
-### Part 4 — Provisional Rating
+### Rating
 [rating + 2–3 sentence justification]
+
+### Single Most Valuable Change
+[one concrete change]
 ```
 
 The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 
 ---
 
-### AGENT 8 — Contribution Skeptic (Attack)
+## Phase 3: Verify the Findings
 
-You are a skeptical co-editor at `TARGET_JOURNAL` (if `TARGET_JOURNAL` is `top-field`, a leading field journal) preparing the case for desk rejection on contribution grounds. Your attack must be specific to this paper — no generic criticisms that could apply to any manuscript.
+The review agents produce more findings than the authors should act on. Some findings are wrong, some are marginal, and some repeat each other. Before writing the report, run one verification agent that removes them.
 
-**Grounding rules — these apply to every part:**
-- Base all literature comparisons on the paper's own bibliography and literature review. Do not rely on your general knowledge of the literature to assert what does or does not exist.
-- If you draw on general knowledge beyond the paper's bibliography, label the claim `[UNVERIFIED — based on general knowledge; authors must confirm]`, and never invent authors, titles, years, or findings.
+**Check for agent failures first**: if any of Agents 1–7 returned no output or clearly malformed output, note it. That agent contributes no findings, and its section in the report becomes a placeholder (see Phase 4).
 
-Read all .tex files completely and thoroughly.
+**Prepare the findings list**: collect every finding tagged `[CRITICAL]` or `[MAJOR]` from Agents 1–6 and give each a unique ID made of the agent number and a running number (for example `A3-2` for the second finding from Agent 3). Copy each finding in full, including its location and quoted text. Do not include `[MINOR]` findings, the untagged prose in Agent 6 Parts 1, 3, 4, and 5, or anything from Agent 7. Those are not verified.
 
-**Your evaluation has 4 parts:**
+Launch one agent with `subagent_type: "general-purpose"`. Prepend the scope guard from Phase 2 and the line "The target journal is [resolved value of TARGET_JOURNAL]." Then give it the prompt below, followed by the findings list and the same .tex, figure, and table file lists the review agents received.
 
-**Part 1 — The Contribution Under Attack**
-- Restate the claimed contribution in one sentence. Then make the strongest case against it: Is the delta over the closest cited papers marginal? Is the question already settled by the papers the authors themselves cite? Is this a known result in a new setting presented as if it were novel?
+---
 
-**Part 2 — Framing vs. Delivery**
-- Does the introduction promise more than the results deliver? Quote the specific promises that the results do not support.
-- Would the central finding change how economists think about the topic, or does it confirm existing priors?
+### VERIFICATION AGENT
 
-**Part 3 — What It Would Take**
-- State concretely what the paper would need to show, add, or reframe for the contribution to clear the target journal's bar. Be specific: which analysis, which comparison, which reframing of the question.
+You are a senior editor checking a draft referee report before it is sent to the authors. The draft contains findings from six reviewers. Your job is to remove findings that are wrong or that do not matter, so that the authors spend their time on the issues that do. You do not add new findings.
 
-**Part 4 — Provisional Rating**
-- Rate the contribution: [Transformative | Significant | Incremental | Insufficient for target journal]. Justify in 2–3 sentences. Give the most skeptical defensible rating, not a reflexively hostile one.
+Read all .tex files and the table files. Then judge each finding in the list with these three tests, in order.
+
+**Test 1 — Is the finding correct?** Check it against the paper.
+- If the finding quotes text, confirm that the quoted text appears in the live text of the paper and that the finding reads it correctly in context.
+- If the finding claims a mismatch between two places (text and table, abstract and results, equation and description), open both places and confirm the mismatch.
+- If the finding says something is missing (a caveat, a definition, a table note, a robustness check), search the paper, including the appendix, and confirm that it is missing.
+- If you cannot confirm the finding, the verdict is `DROP`.
+
+**Test 2 — Does the finding matter?** A finding matters if at least one of these holds:
+- A referee at `TARGET_JOURNAL` would raise it in a report.
+- Fixing it would change a reader's confidence in the main results.
+- It would mislead or confuse a careful reader about what the paper does or finds.
+
+If none holds, the verdict is `DROP`. If the finding is correct and matters but its severity tag overstates it, the verdict is `DOWNGRADE` (`[CRITICAL]` to `[MAJOR]`, or `[MAJOR]` to `[MINOR]`). Reserve `[CRITICAL]` for problems that could cause a desk rejection or that a referee would list as a main concern.
+
+**Test 3 — Is the finding a duplicate?** If two findings describe the same underlying problem, keep the more specific one and give the other the verdict `MERGE` with the ID of the finding it merges into.
+
+Rules:
+- Do not keep a finding because it is harmless to include. The default for a finding you cannot confirm or cannot defend as material is `DROP`.
+- Do not drop a finding because the fix is costly or because the authors will dislike it. Required analyses from Agent 6 are dropped only if the paper already contains the analysis or if the concern it addresses does not apply to this paper's design.
+- Judge every finding. Do not skip any ID.
 
 **Output format:**
 
 ```
-## Agent 8: Contribution Skeptic
+## Verification
 
-### Part 1 — The Contribution Under Attack
-[assessment]
-
-### Part 2 — Framing vs. Delivery
-[assessment, with quoted promises where applicable]
-
-### Part 3 — What It Would Take
-[numbered list of concrete changes]
-
-### Part 4 — Provisional Rating
-[rating + 2–3 sentence justification]
+| ID | Verdict | Final severity | Merged into | Reason (15 words or fewer) |
+|----|---------|----------------|-------------|----------------------------|
+| A1-1 | KEEP / DOWNGRADE / DROP / MERGE | CRITICAL / MAJOR / MINOR / — | ID or — | ... |
 ```
 
-The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
+The findings to verify are: [FINDINGS LIST WITH IDS]
+The .tex files are: [LIST ALL TEX FILE PATHS HERE]
+Figure files: [LIST FIGURE PATHS]
+Table files: [LIST TABLE PATHS]
 
 ---
 
-## Phase 3: Consolidate and Save
+**Apply the verdicts** before writing the report:
+- `KEEP`: the finding stays as written.
+- `DOWNGRADE`: change the finding's tag to the final severity and move it to the matching subsection of its agent's output if that output is organized by severity.
+- `DROP`: delete the finding. It does not appear anywhere in the report, and the report does not mention that findings were removed.
+- `MERGE`: delete the finding and keep the one it merges into.
 
-**Before consolidating**, check for agent failures: if any agent returned no output or clearly malformed output, insert a placeholder section in the report (e.g., "## 5. Mathematics, Equations & Notation — Agent did not return output") and include it in the final user-facing summary.
+Record the number of findings dropped and merged for the user-facing summary.
 
-After all available agent results are collected, consolidate them into a single structured report.
+**If the verification agent fails** (no output, malformed output, or IDs missing from the table), keep all unverified findings as tagged and add this line under the report header: "**Note**: findings in this report were not verified."
+
+## Phase 4: Consolidate and Save
+
+Consolidate the verified findings into a single structured report. The report must not print any finding twice: the Priority Action Items list gives one line per `[CRITICAL]` and `[MAJOR]` finding, and the full finding appears once in its agent's section.
 
 **Save location**: save the report inside a `reviews/` subfolder of the paper's directory (create it if it does not exist). Keeping reports out of the paper's root directory prevents them from being picked up by future runs of this skill.
 
@@ -575,89 +619,82 @@ where `[YYYY-MM-DD]` is today's date.
 
 ## Overall Assessment
 
-[3–4 sentences synthesized as follows: (1) what the paper does — from Agent 7 Part 1; (2) where the contribution stands — from the Contribution Synthesis in Section 1 below; (3) the single most critical issue — the top CRITICAL item from the Priority Action Items list below. Do not introduce judgments not already present in the agent outputs.]
+[3–4 sentences synthesized as follows: (1) what the paper does — from Agent 7 "The Claimed Contribution"; (2) where the contribution stands — from Agent 7's rating and its weakest answers among the six questions; (3) the single most critical issue — the top CRITICAL item from the Priority Action Items list below. Do not introduce judgments not already present in the agent outputs.]
 
-**Contribution Rating**: [From the Contribution Synthesis — if Agents 7 and 8 agree, state the shared rating; if they differ, state both (e.g., "Significant (advocate) / Incremental (skeptic)") and name the crux of disagreement in one clause]
+**Contribution Rating**: [Copy the rating from Agent 7]
 
-**Preliminary Recommendation**: [Copy exactly from Agent 6 Part 4 — do not paraphrase. If both Agents 7 and 8 rate the contribution "Insufficient for target journal", append: "Note: both contribution reviewers rate the contribution below the target journal's bar, which makes desk rejection likely regardless of execution."]
-
----
-
-## 1. Central Contribution
-
-### Advocate's Case
-[Agent 7 output]
-
-### Skeptic's Case
-[Agent 8 output]
-
-### Synthesis
-[Written by you, the coordinator, using only material from Agents 7 and 8 — one short paragraph. First state where the two agents agree: those are the robust conclusions. Then name the crux of any disagreement in one sentence — that is the judgment call the authors must win in the introduction. State the synthesized rating: if the two ratings agree, use that rating; if they differ, report both and do not average them. End with one sentence on the single change that would most strengthen the contribution (from Agent 8 Part 3), and this standing caveat: "Novelty relative to literature not cited in the paper has not been verified."]
-
----
-
-## 2. Referee Assessment (Identification, Analyses, Positioning & Fit)
-
-[Agent 6 output]
-
----
-
-## 3. Unsupported Claims & Identification Integrity
-
-[Agent 3 output]
-
----
-
-## 4. Internal Consistency & Cross-Reference Verification
-
-[Agent 2 output]
-
----
-
-## 5. Mathematics, Equations & Notation
-
-[Agent 4 output]
-
----
-
-## 6. Tables, Figures & Documentation
-
-[Agent 5 output]
-
----
-
-## 7. Spelling, Grammar & Style
-
-[Agent 1 output, preserving its structure]
+**Preliminary Recommendation**: [Copy exactly from Agent 6 Part 4 — do not paraphrase. If Agent 7 rates the contribution "Insufficient for target journal", append: "Note: the contribution is rated below the target journal's bar, which makes desk rejection likely regardless of execution."]
 
 ---
 
 ## Priority Action Items
 
-Each of Agents 1–6 has tagged its findings as `[CRITICAL]`, `[MAJOR]`, or `[MINOR]`. Collect all tagged items across those agents and rank them here using the following triage hierarchy: `[CRITICAL]` items from Agent 3 and Agent 6 Part 1 first, then `[CRITICAL]` from Agent 6 Part 2, then remaining `[CRITICAL]` items by agent order, then all `[MAJOR]` items, then `[MINOR]` items.
+[One line per finding: a short statement of the problem and the section of this report where the full finding appears. List only CRITICAL and MAJOR findings that survived verification. MINOR findings appear only in the sections below.
 
-If the synthesized contribution rating is Incremental or Insufficient, insert one additional `[CRITICAL]` item at the very top of the CRITICAL list summarizing the contribution gap and the single change identified in the Contribution Synthesis.
+Order: `[CRITICAL]` items from Agent 3 and Agent 6 Part 1 first, then `[CRITICAL]` from Agent 6 Part 2, then remaining `[CRITICAL]` items by agent order, then all `[MAJOR]` items in the same agent order.
+
+If Agent 7's rating is Incremental or Insufficient, insert one additional item at the very top of the CRITICAL list stating the contribution gap and Agent 7's Single Most Valuable Change. If the rating is Transformative or Significant, add the Single Most Valuable Change as the first MAJOR item.]
 
 **CRITICAL** (must fix — these could cause desk rejection or major referee objections):
 1. ...
 2. ...
-3. ...
 
 **MAJOR** (should fix — will likely be raised by referees):
+3. ...
 4. ...
-5. ...
-6. ...
-7. ...
 
-**MINOR** (polish — improves paper quality):
-8. ...
-9. ...
-10. ...
+---
+
+## 1. Central Contribution
+
+[Agent 7 output]
+
+Novelty relative to the prior literature has not been assessed in this review.
+
+---
+
+## 2. Referee Assessment (Identification, Analyses, Positioning & Fit)
+
+[Agent 6 output, after applying the verification verdicts]
+
+---
+
+## 3. Unsupported Claims & Identification Integrity
+
+[Agent 3 output, after applying the verification verdicts]
+
+---
+
+## 4. Internal Consistency & Cross-Reference Verification
+
+[Agent 2 output, after applying the verification verdicts]
+
+---
+
+## 5. Mathematics, Equations & Notation
+
+[Agent 4 output, after applying the verification verdicts]
+
+---
+
+## 6. Tables, Figures & Documentation
+
+[Agent 5 output, after applying the verification verdicts]
+
+---
+
+## 7. Spelling, Grammar & Style
+
+[Agent 1 output, after applying the verification verdicts]
 ```
+
+Rules for the agent sections:
+- Preserve each agent's structure, but delete any subsection that has no findings left. If a whole section has no findings left, write "No issues that warrant action."
+- If an agent failed, write a placeholder in its section (e.g., "Agent did not return output") and mention it in the user-facing summary.
 
 After saving, report to the user:
 1. The path to the saved report
-2. The preliminary recommendation from Agent 6 and the synthesized contribution rating (noting any advocate/skeptic disagreement)
+2. The preliminary recommendation from Agent 6 and the contribution rating from Agent 7
 3. The top 5 priority action items
-4. How many issues were flagged in each category (counts)
+4. How many findings remain in each severity category, and how many were removed in verification
 5. If any table or figure files on disk were excluded as unreferenced in Phase 1, their count and a one-line note that they were not reviewed

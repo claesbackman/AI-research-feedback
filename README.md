@@ -78,7 +78,7 @@ The review skills share one design. Each launches several specialised review age
 
 | Command | What it does | Agents | Report |
 |---|---|---|---|
-| `/review-paper` | Full referee-style review of a paper, including a steelman and an attack on the contribution grounded in the paper's own bibliography | 8 | `PRE_SUBMISSION_REVIEW_[date].md` |
+| `/review-paper` | Full referee-style review of a paper, including six diagnostic questions on the contribution and a verification pass that removes wrong and marginal findings | 8 | `PRE_SUBMISSION_REVIEW_[date].md` |
 | `/review-paper-light` | Fast check of contribution, identification, and causal overclaiming, for quick iteration | 2 | `QUICK_REVIEW_[date].md` |
 | `/review-paper-checks` | Mechanical check of spelling, internal consistency, cross-references, and unsupported claims, with no editorial judgment. Offers to apply the unambiguous fixes to the `.tex` files afterwards | 3 | `PAPER_CHECK_[date].md` |
 | `/review-pap` | Pre-analysis plan review covering specification completeness, identification, statistical analysis, and implementation | 6 | `PAP_REVIEW_[date].md` |

@@ -1,7 +1,7 @@
 ---
 name: review-paper-checks
 description: Run a fast 3-agent mechanical check of an economics paper — spelling and grammar, internal consistency and cross-references, and unsupported claims. Reports fixable errors, not editorial judgment.
-argument-hint: [optional: path/to/main.tex]
+argument-hint: "[optional: path/to/main.tex]"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
 disable-model-invocation: true
 ---

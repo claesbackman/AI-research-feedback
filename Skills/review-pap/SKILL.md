@@ -1,7 +1,7 @@
 ---
 name: review-pap
 description: Run a 6-agent pre-submission review of a pre-analysis plan (PAP) for a specified registration target or journal
-argument-hint: [optional: TARGET] [optional: path/to/pap.tex]
+argument-hint: "[optional: TARGET] [optional: path/to/pap.tex]"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
 disable-model-invocation: true
 ---

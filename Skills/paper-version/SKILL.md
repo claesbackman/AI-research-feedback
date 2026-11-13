@@ -2,7 +2,7 @@
 name: paper-version
 description: Convert a LaTeX research paper into a policy brief, 1-page summary, or 5-page summary for a general audience, with factual review and a standalone HTML page for GitHub Pages.
 user-invocable: true
-argument-hint: [brief|1page|5page]
+argument-hint: "[brief|1page|5page]"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
 disable-model-invocation: true
 ---
