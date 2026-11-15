@@ -686,7 +686,13 @@ Novelty relative to the prior literature has not been assessed in this review.
 ## 7. Spelling, Grammar & Style
 
 [Agent 1 output, after applying the verification verdicts]
+
+---
+
+*This report was generated with the `review-paper` skill. To cite: Bäckman, C. (2026). AI tools for research: Claude Code skills for feedback on and communication of academic research (Version 1.0.0) [Computer software]. https://github.com/claesbackman/AI-research-feedback*
 ```
+
+Copy the citation line at the end of the report verbatim.
 
 Rules for the agent sections:
 - Preserve each agent's structure, but delete any subsection that has no findings left. If a whole section has no findings left, write "No issues that warrant action."
