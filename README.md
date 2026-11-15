@@ -11,10 +11,9 @@ Each skill lives in its own folder under `Skills/` with a `SKILL.md` file. Some 
 
 - `review-paper`, `review-paper-light`, `review-paper-checks`, `review-pap`, `review-grant`
 
-**Feedback on your code.** Skills that check whether the analysis code does what the paper says it does, hunt for errors in a recent change, or explain a change well enough that a coauthor could defend it.
+**Feedback on your code.** Skills that check whether the analysis code does what the paper says it does, or explain a change well enough that a coauthor could defend it.
 
 - `review-paper-code`: Paper–code reproducibility and alignment review.
-- `audit-analysis`: Adversarial audit of changed analysis code, run by an isolated subagent.
 - `explain-diff`: Explain a code change as an offline HTML page with a quiz.
 
 **Communicating your results.** Skills that turn a finished paper into something for a different audience.
@@ -22,7 +21,7 @@ Each skill lives in its own folder under `Skills/` with a `SKILL.md` file. Some 
 - `paper-version`: Policy brief, one-page, or five-page summary with a standalone HTML page.
 - `explorable-deck`: A Quarto reveal.js slide deck built around a running example and live, presenter-driven figures.
 - `explorable-beamer`: The same deck in LaTeX beamer, with TikZ stages the presenter steps through, a handout build, and a screenshot-and-log check of every page.
-- `explorable-pptx`: The same deck as a PowerPoint file that coauthors can edit, with stages drawn as native shapes, a handout build, and screenshots taken through PowerPoint itself.
+- `paper-website`: A digital edition of the paper as a static website, built from the LaTeX source, with the PDF's own numbering, search, linked references, and optional figures drawn from aggregate data.
 
 **Utilities.**
 
@@ -35,7 +34,7 @@ These are [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code). 
 
 A global install (`~/.claude/skills/`) is available in every project. A project-local install (`.claude/skills/`) applies only to that repository. Skills are picked up the next time you start Claude Code in the target directory.
 
-The review skills, `audit-analysis`, `explain-diff`, and `paper-version` set `disable-model-invocation: true`, so they run only when you explicitly type their `/` command. Claude will never launch a multi-agent review on its own. `pdf-to-markdown`, `explorable-deck`, `explorable-beamer` and `explorable-pptx` are the exceptions: Claude may reach for them on its own when you ask it to read a PDF or to make a presentation. The three deck skills still run their multi-agent review only when you ask for it, for example with `/explorable-beamer review`, or `full` to add the creative director.
+The review skills, `explain-diff`, and `paper-version` set `disable-model-invocation: true`, so they run only when you explicitly type their `/` command. Claude will never launch a multi-agent review on its own. `pdf-to-markdown`, `explorable-deck`, `explorable-beamer` and `paper-website` are the exceptions: Claude may reach for them on its own when you ask it to read a PDF, to make a presentation, or to put a paper online. The two deck skills still run their multi-agent review only when you ask for it, for example with `/explorable-beamer review`, or `full` to add the creative director.
 
 
 ## Installation
@@ -54,7 +53,7 @@ Re-run the same line later to update.
 
 ### One skill at a time
 
-Every skill except `explorable-deck`, `explorable-beamer` and `explorable-pptx` is a single `SKILL.md` file. Replace `<name>` with the skill's folder name:
+Every skill except `explorable-deck`, `explorable-beamer` and `paper-website` is a single `SKILL.md` file. Replace `<name>` with the skill's folder name:
 
 ```bash
 mkdir -p ~/.claude/skills/<name> && curl -o ~/.claude/skills/<name>/SKILL.md \
@@ -63,7 +62,7 @@ mkdir -p ~/.claude/skills/<name> && curl -o ~/.claude/skills/<name>/SKILL.md \
 
 For a project-local install, use `.claude/skills/<name>` as the target instead of `~/.claude/skills/<name>`.
 
-`explorable-deck`, `explorable-beamer` and `explorable-pptx` ship a template, reference notes, and helper scripts alongside their `SKILL.md`, so they need the whole folder (replace the name as needed):
+`explorable-deck`, `explorable-beamer` and `paper-website` ship a template, reference notes, and helper scripts alongside their `SKILL.md`, so they need the whole folder (replace the name as needed):
 
 ```bash
 git clone --depth 1 https://github.com/claesbackman/AI-research-feedback.git /tmp/airf && mkdir -p ~/.claude/skills && cp -R /tmp/airf/Skills/explorable-deck ~/.claude/skills/ && rm -rf /tmp/airf
@@ -135,35 +134,6 @@ Discovers the main LaTeX paper and the analysis code, checks reproducibility and
 The default depth, `main`, focuses on the main scripts and core outputs. `full` reviews every detected code file in scope. The report is written to `reviews/code_review_report.md`.
 
 **Requirements:** Claude Code with the `general-purpose` subagent, a LaTeX paper, and Stata, R, or Python analysis code.
-
-### `audit-analysis` — Adversarial Audit of Changed Analysis Code
-
-Finds errors in changed empirical code before a referee does. The skill hands the diff to a subagent with a clean context and tells it to break the code. That isolation is the point: whoever wrote the code, including the current Claude session if it helped, cannot steer the findings. It complements `review-paper-code`, which asks whether the paper matches the code rather than whether the code is right.
-
-| Area | Focus |
-|---|---|
-| Claims vs. code | Do comments and commit messages match what actually runs? |
-| Sample | N before and after every filter, merge, and collapse, taken from logs |
-| Merges | Keys, uniqueness, fate of unmatched observations, duplicate id-period pairs |
-| Variables | Units, logs vs. levels, deflation, lag alignment, name vs. construction |
-| Silent failures | Missings coerced to zero, `if x > 0` on missing, `destring ... force`, `fillna(0)` |
-| Estimation | Clustering level and count, what the fixed effects absorb, weights, estimation N |
-
-Every finding must cite a file, a line, and a quoted excerpt, and is tagged CONFIRMED (visible in the code) or SUSPECTED (needs the data). Unanchored findings are dropped and counted. The auditor also reports, category by category, where it found nothing, and closes with the one thing it could not check without the data.
-
-**Usage:**
-
-```text
-/audit-analysis
-/audit-analysis main
-/audit-analysis abc123
-```
-
-With no argument the working tree and commits are audited against `main`. Pass a branch, tag, or commit to audit against that instead. Diffs above roughly 1,500 changed lines are split across two auditors.
-
-**Output:** Findings are relayed in the terminal, worst first, without softening. Nothing is written or changed in the repository. If you want repairs, that is a separate request.
-
-**Requirements:** Claude Code with the `general-purpose` subagent, and a git repository with Stata, R, or Python analysis code. Logs improve the sample checks but are not required.
 
 ### `explain-diff` — Explain a Code Change
 
@@ -295,37 +265,35 @@ Claude may also pick this skill on its own when you ask for a Beamer, LaTeX, or 
 - Optionally [pdfpc](https://pdfpc.github.io/) to present with speaker notes.
 - Install the whole `Skills/explorable-beamer` folder, not just `SKILL.md`. See [Installation](#one-skill-at-a-time).
 
-### `explorable-pptx` — The Same Deck in PowerPoint
+### `paper-website` — A Digital Edition of the Paper
 
-Builds the same kind of deck as `explorable-deck`, under the same design rules, as a PowerPoint file. Use it when coauthors need to edit the slides in PowerPoint, Keynote, or Google Slides. The deck is written as a declarative `deck.js` file and turned into a `.pptx` by [pptxgenjs](https://gitbrent.github.io/PptxGenJS/). The stages are drawn as native PowerPoint shapes in the deck's palette, one slide per step, because pptxgenjs cannot write PowerPoint's click animations. The paper's PDF figures are recoloured and rendered to PNG, since PowerPoint cannot place a PDF. Every number a chart draws or a sentence quotes comes from one file, `data/numbers.js`, and the data object of an existing Quarto deck drops in unchanged.
+Turns a LaTeX paper into a simple static website for an academic audience. Every section becomes a page, and sections, figures, tables and equations keep the numbers they have in the PDF. Footnotes open in place, citations link to the reference list, and hovering over a citation or an exhibit number shows what it points to. The site has full-text search, a light and a dark theme, a "cite this paper" box, and a CSV download under every table.
 
-One build produces the talk and a handout with one slide per frame in its finished state. Speaker notes go into PowerPoint's own notes field and show in presenter view. While editing, `sh build.sh --fast` builds only the talk. On a Mac the check exports the deck to PDF through PowerPoint itself, so the screenshots show what the room will see. It reports build warnings and names any slide whose content reaches the footline, which matters because PowerPoint lets text spill below its box without a warning. Without PowerPoint it falls back to LibreOffice, whose substitute fonts make the check approximate. A lint then flags label titles, missing speaker notes and source lines, and font sizes or faces set by hand.
+The skill asks a short list of questions before it builds: whether the site should carry data, which extra pages to include (data and code, questions and answers, errata), how to treat the appendix (including a separate online appendix file), where the site will live, and the colour scheme and typeface. The default scheme shares its palette with the explorable decks, so a paper's site and its slides look like one family. Data comes in three tiers. With no data, figures are the paper's images. With figure data, chosen figures are redrawn from aggregate CSV tables with a table view and a download. The third tier adds a page where readers slice one aggregate table by its dimensions. A guard in the build refuses files that look like microdata.
 
-Review works as in `explorable-deck`: none by default, `review` for the four review agents and the audience member, and `full` to add the creative director.
+The build scripts are copied into your project, so you can update the site after every revision with one command and without the skill. The update reports what changed since the last build (pages, renumbered figures and tables), keeps page addresses stable when a section is retitled, leaves a redirect where a page disappears, and can copy the site to its public folder. The site shows the date and git commit of the paper it was built from. Running the installer again upgrades a project to a newer template without touching its settings or hand-written pages.
 
 **Usage:**
 
 ```text
-/explorable-pptx
-/explorable-pptx 20-minute conference talk from paper/main.tex
-/explorable-pptx review slides/
-/explorable-pptx full 45-minute job-market talk from paper/main.tex
+/paper-website
+/paper-website Writing/main.tex
+/paper-website rebuild after the revision
 ```
 
-Claude may also pick this skill on its own when you ask for a PowerPoint or Keynote presentation, or for slides your coauthors can edit.
+Claude may also pick this skill on its own when you ask for a website, web version, or online version of a paper.
 
-**Output:** One folder per deck containing `deck.js`, the theme, the charts, the data file, the recoloured figures, `plan.md`, and a README that says how to build, check, and present it. `sh build.sh` writes `deck.pptx` to present with PowerPoint's presenter view and `deck-handout.pptx` to print or send.
+**Output:** A `website_build/` folder in your project (`site.json`, the Python scripts, the theme, the hand-written pages) and the site itself in a folder such as `Website/`, ready to copy to GitHub Pages or any static host. A checker reports broken links, unresolved references, formulas that do not render, and exhibit numbers that differ from the PDF.
 
 **Requirements:**
 
-- Claude Code with the `general-purpose` subagent for the optional review passes.
-- Node 18 or later with npm. The first build installs pptxgenjs into the deck folder, which needs network access once.
-- Python 3 and poppler (`brew install poppler` on macOS, `apt install poppler-utils` on Linux), for the screenshot check and for rendering the paper's figures.
-- Microsoft PowerPoint on macOS for exact screenshots. The first run may ask you to allow automation. Without PowerPoint, LibreOffice (`soffice`) gives approximate ones.
-- Ghostscript (`brew install ghostscript`) if you want the paper's PDF figures recoloured.
-- The deck uses fonts that ship with Microsoft Office. Keynote and LibreOffice show substitutes.
-- Install the whole `Skills/explorable-pptx` folder, not just `SKILL.md`. See [Installation](#one-skill-at-a-time).
+- pandoc (`brew install pandoc`), required.
+- poppler (`brew install poppler` on macOS, `apt install poppler-utils` on Linux), to convert PDF figures and to compare exhibit numbers with the PDF.
+- Python 3.8 or later. No extra packages.
+- Chrome or Chromium for the rendered check.
+- Install the whole `Skills/paper-website` folder, not just `SKILL.md`. See [Installation](#one-skill-at-a-time).
 
+Sites built with the skill carry a credit line in the footer and the citation of this repository on their data and code page.
 
 ## Utilities
 
