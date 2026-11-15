@@ -103,6 +103,8 @@ If no path is given, the skill auto-detects the main file and follows its `\inpu
 
 Add journals or funders by editing the recognised names list in the skill file. Add project-specific context in your prompt or in a local `CLAUDE.md`.
 
+**Source of the contribution questions.** The six questions `review-paper` asks about a paper's contribution are from Jason Fletcher, ["How to Write a Top-5 Paper: A Case Study"](https://jasonmfletcher.substack.com/p/how-to-write-a-top-5-paper-a-case).
+
 **Which paper review to run.** `review-paper-checks` is for a draft you already believe in, shortly before submission, when you want to find things that are wrong rather than things that are debatable. `review-paper-light` is for a quick read of the argument while the paper is still moving. `review-paper` is the full report once the draft is close to final.
 
 **Requirements.** [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent. The paper reviews expect a LaTeX paper. The pre-analysis plan and grant reviews accept `.md`, `.txt`, or `.tex`, and will attempt `.pdf` and `.docx` while noting any accessibility limits. Both also inspect supporting files when present, such as power calculations, survey instruments, budgets, timelines, and CVs.
@@ -294,6 +296,8 @@ Claude may also pick this skill on its own when you ask for a website, web versi
 - Install the whole `Skills/paper-website` folder, not just `SKILL.md`. See [Installation](#one-skill-at-a-time).
 
 Sites built with the skill carry a credit line in the footer and the citation of this repository on their data and code page.
+
+**Credit.** The idea of publishing a paper as a website of this kind comes from Paul Novosad and coauthors, who built [nobel-prizes.devdatalab.org](https://nobel-prizes.devdatalab.org/) for their paper. See also Novosad's [post on X](https://x.com/paulnovosad/status/2108204197921620159).
 
 ## Utilities
 
