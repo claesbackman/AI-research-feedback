@@ -1,0 +1,1 @@
+{"wide": true, "scripts": ["https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js", "data/explorer.js", "assets/charts.js", "assets/explorer.js"], "description": "Explore the results behind the paper by group."}

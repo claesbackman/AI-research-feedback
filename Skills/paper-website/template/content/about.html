@@ -1,0 +1,35 @@
+<div class="explorer">
+<h1>Data and code</h1>
+<p class="lead">What this site contains, what it does not, and how to work with the paper.</p>
+
+<div class="panel">
+<h2>What is on this site</h2>
+<p>[[One or two sentences: the full text of the paper, its figures and tables, and, if the site carries data, what the numbers are (for example: every number is an aggregate that the paper reports).]]</p>
+@@DATA_FILES@@
+</div>
+
+<div class="panel">
+<h2>What is not on this site</h2>
+<p>[[Say what is not released and why: the microdata, confidential sources, access rules, where a researcher can apply for access. Say where the replication code lives, or that it is not public yet.]]</p>
+</div>
+
+<!-- EDIT: keep this panel only if the author wants an "ask an AI" prompt. Write the prompt from the paper: title, authors, design, main findings with numbers, links to the site and PDF, and two or three tasks for the assistant. -->
+<div class="panel">
+<h2>Ask an AI about this paper</h2>
+<p>Paste the text below into the assistant of your choice. It points the assistant at the paper and asks it to help you read or check the analysis.</p>
+<pre id="ai-prompt">[[The prompt.]]</pre>
+<p><button type="button" class="pill" data-copy="ai-prompt">Copy the prompt</button> <span class="copied small muted" aria-live="polite"></span></p>
+</div>
+
+<div class="panel">
+<h2>Citing</h2>
+<p>@@CITE_TEXT@@</p>
+<pre>@@CITE_BIBTEX@@</pre>
+</div>
+
+<div class="panel">
+<h2>How this site was built</h2>
+<p>The pages are generated from the paper's LaTeX source with pandoc. Figures, tables and equations keep the numbers they have in the PDF, footnotes become inline notes, and citations link to the reference list. The math is rendered with KaTeX. The site is static and needs no server. Built on @@BUILD_DATE@@.</p>
+<p>The site was built with the paper-website skill from: @@CREDIT@@</p>
+</div>
+</div>
