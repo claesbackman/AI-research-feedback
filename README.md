@@ -297,6 +297,8 @@ Claude may also pick this skill on its own when you ask for a website, web versi
 
 Sites built with the skill carry a credit line in the footer and the citation of this repository on their data and code page.
 
+**Credit.** The idea of publishing a paper as a website of this kind comes from Paul Novosad and coauthors, who built [nobel-prizes.devdatalab.org](https://nobel-prizes.devdatalab.org/) for their paper. See also Novosad's [post on X](https://x.com/paulnovosad/status/2108204197921620159).
+
 ## Utilities
 
 ### `pdf-to-markdown` — Convert a PDF to Readable Markdown
