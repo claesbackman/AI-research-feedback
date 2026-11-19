@@ -8,7 +8,8 @@ authors:
     website: "https://claesbackman.com"
 type: software
 version: "1.0.0"
-date-released: "2026-10-14"
+date-released: "2026-11-19"
+doi: "10.5281/zenodo.24380120"
 url: "https://claesbackman.com/ai_workshop/index.html"
 repository-code: "https://github.com/claesbackman/AI-research-feedback"
 license: MIT
