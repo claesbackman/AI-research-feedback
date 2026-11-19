@@ -320,7 +320,7 @@ When `pdftotext` (part of poppler) is installed the conversion runs in one shot 
 
 ## How to cite
 
-If you use these skills in your research, please cite the repository. GitHub's "Cite this repository" button on the repo page exports the reference in APA or BibTeX format from the `CITATION.cff` file. In BibTeX:
+If you use these skills in your research, please cite the repository. The archived release has the DOI [10.5281/zenodo.24380120](https://doi.org/10.5281/zenodo.24380120), which always points to the latest version. GitHub's "Cite this repository" button on the repo page exports the reference in APA or BibTeX format from the `CITATION.cff` file. In BibTeX:
 
 ```bibtex
 @misc{backman2026aitools,
@@ -328,6 +328,7 @@ If you use these skills in your research, please cite the repository. GitHub's "
   title        = {{AI} tools for research: {Claude Code} skills for feedback on and communication of academic research},
   year         = {2026},
   version      = {1.0.0},
+  doi          = {10.5281/zenodo.24380120},
   howpublished = {\url{https://github.com/claesbackman/AI-research-feedback}}
 }
 ```
