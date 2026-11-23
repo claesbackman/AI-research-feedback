@@ -23,6 +23,10 @@ Each skill lives in its own folder under `Skills/` with a `SKILL.md` file. Some 
 - `explorable-beamer`: The same deck in LaTeX beamer, with TikZ stages the presenter steps through, a handout build, and a screenshot-and-log check of every page.
 - `paper-website`: A digital edition of the paper as a static website, built from the LaTeX source, with the PDF's own numbering, search, linked references, and optional figures drawn from aggregate data.
 
+**Writing.**
+
+- `voice-builder`: Build, test and maintain a voice file from your own papers, so the agent edits and drafts in your voice.
+
 **Utilities.**
 
 - `pdf-to-markdown`: Convert a PDF to readable markdown, trimmed at the references.
@@ -34,7 +38,7 @@ These are [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code). 
 
 A global install (`~/.claude/skills/`) is available in every project. A project-local install (`.claude/skills/`) applies only to that repository. Skills are picked up the next time you start Claude Code in the target directory.
 
-The review skills, `explain-diff`, and `paper-version` set `disable-model-invocation: true`, so they run only when you explicitly type their `/` command. Claude will never launch a multi-agent review on its own. `pdf-to-markdown`, `explorable-deck`, `explorable-beamer` and `paper-website` are the exceptions: Claude may reach for them on its own when you ask it to read a PDF, to make a presentation, or to put a paper online. The two deck skills still run their multi-agent review only when you ask for it, for example with `/explorable-beamer review`, or `full` to add the creative director.
+The review skills, `explain-diff`, and `paper-version` set `disable-model-invocation: true`, so they run only when you explicitly type their `/` command. Claude will never launch a multi-agent review on its own. `pdf-to-markdown`, `explorable-deck`, `explorable-beamer` and `paper-website` are the exceptions: Claude may reach for them on its own when you ask it to read a PDF, to make a presentation, or to put a paper online. `voice-builder` may also start on its own when you ask for a voice file. The two deck skills still run their multi-agent review only when you ask for it, for example with `/explorable-beamer review`, or `full` to add the creative director.
 
 
 ## Installation
@@ -298,6 +302,32 @@ Claude may also pick this skill on its own when you ask for a website, web versi
 Sites built with the skill carry a credit line in the footer and the citation of this repository on their data and code page.
 
 **Credit.** The idea of publishing a paper as a website of this kind comes from Paul Novosad and coauthors, who built [nobel-prizes.devdatalab.org](https://nobel-prizes.devdatalab.org/) for their paper. See also Novosad's [post on X](https://x.com/paulnovosad/status/2108204197921620159).
+
+## Writing
+
+### `voice-builder` — A Voice File from Your Own Prose
+
+Reads a folder of your own papers and writes `voice.md`, a short style guide the agent follows when it edits or drafts for you. The skill first sorts the folder: it uses one file per paper, checks each PDF conversion for missing pages and scrambled columns, and sets aside slides, notes and existing voice files. It records who wrote each sample and for whom, and asks you which sections of coauthored papers are yours, whether any text was drafted with AI, and which paper sounds most like you. If all your papers are coauthored, that paper becomes the base. The skill then sorts the patterns it finds into habits, patterns of one type of writing, and quirks of a single paper. It compares them with the writing instructions already in your `CLAUDE.md`, marks each as new, covered or in conflict, and shows them to you with quotations before it writes the file.
+
+Every quoted phrase is checked against its source by text search, and a verification log is added to `sample-notes.md`. The file lists only the words and constructions you chose to ban, not words that are merely absent from the samples, and it holds unchanged passages of your own writing instead of a paragraph written by the model. The skill then proposes one line for `CLAUDE.md` and edits a paragraph of your draft as a test.
+
+**Usage:**
+
+```text
+/voice-builder sample-papers
+/voice-builder sample-papers my-voice.md
+/voice-builder learn
+/voice-builder check
+```
+
+The optional second argument names the output file. `learn` turns a correction you just made into a narrowly scoped change to the voice file, with a change log. `check` tests an existing voice file on a paragraph.
+
+**Output:** `voice.md` in the project root and `sample-notes.md` in the samples folder. An existing voice file is never overwritten without asking, and the check ignores letter case, so `VOICE.md` counts.
+
+**Requirements:** Claude Code and at least three samples of your own writing (`.pdf`, `.tex`, `.md`, `.txt` or `.docx`). No subagents are used.
+
+**Credit.** Inspired by Mihail Velikov's `voice-extractor` skill, which supplied the phased extraction and the verification gate, and by Chris Blattman's [voice pack guide](https://claudeblattman.com/build-your-own/voice/), which supplied the sample notes, the testing on real work and the learning from corrections.
+
 
 ## Utilities
 
